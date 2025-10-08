@@ -61,3 +61,22 @@
   border-radius: 4px;
   cursor: pointer;
 }
+
+.HomeUIHeader {
+  padding-top: 5%;
+  font-size: 72px;
+}
+
+.gotoSV {
+  margin-top: 50vh;
+  background: #fff;
+  color: black;
+}
+
+.gotoHome {
+  background: #fff;
+  color: black;
+  border-color: black;
+
+}
+

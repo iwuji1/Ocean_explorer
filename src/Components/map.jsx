@@ -15,7 +15,7 @@ const Map = forwardRef((Props, ref) => {
       container: mapContainerRef.current,
       //style: "mapbox://styles/mapbox/dark-v11", // or satellite-streets-v12
       // center: [-61.2872, 13.1568], // Saint Vincent coordinates
-      zoom: 0,
+      zoom: 1.5,
     });
 
     // Optional: Add navigation controls
@@ -33,9 +33,9 @@ const Map = forwardRef((Props, ref) => {
       if (!mapRef.current) return;
       mapRef.current.flyTo({
         center: [-61.2872, 13.1568],
-        zoom: 8,
-        speed: 1.2,
-        curve: 1.8,
+        zoom: 10,
+        speed: 0.8,
+        curve: 1.5,
         essential: true, // this animation is considered essential with respect to prefers-reduced-motion
       });
     },
@@ -43,9 +43,9 @@ const Map = forwardRef((Props, ref) => {
       if (!mapRef.current) return;
       mapRef.current.flyTo({
         center: [0,0],
-        zoom: 0,
-        speed: 1.2,
-        curve: 1.8,
+        zoom: 1,
+        speed: 0.8,
+        curve: 1.2,
         essential: true, // this animation is considered essential with respect to prefers-reduced-motion
       });
     }
