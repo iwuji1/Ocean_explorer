@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import './App.css'
 
 import Map from "./Components/map.jsx";
-import HomeUI from "./Components/HomeUI.jsx";
+import HomeUI from "./Components/UI/HomeUI.jsx";
 
 function App() {
   const mapRef = useRef(null);
