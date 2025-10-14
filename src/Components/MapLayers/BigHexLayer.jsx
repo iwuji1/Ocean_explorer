@@ -40,7 +40,7 @@ export default function BigHexLayer(map, idPrefix = "big", visible = true) {
         map.setPaintProperty(fillLayerId, "fill-color", [
           "case",
           ["==", ["get", "GRID_ID"], e.features[0].properties.GRID_ID],
-          "#f00",
+          "#44DBDA",
           "#088",
         ]);
       }

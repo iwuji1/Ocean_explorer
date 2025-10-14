@@ -2,12 +2,13 @@ import { forwardRef, useImperativeHandle, useEffect, useRef, useState, act } fro
 import mapboxgl from "mapbox-gl";
 
 import BigHexLayer from "./MapLayers/BigHexLayer";
-import MidHexLayer from "./MapLayers/MidHexLayer";
-import SmallHexLayer from "./MapLayers/SmallHexLayer";
+import H3_7HexLayer from "./MapLayers/H3_7HexLayer";
+import H3_5HexLayer from "./MapLayers/H3_5HexLayer";
 import H3_6HexLayer from "./MapLayers/H3_6HexLayer";
 import ShipWrecksPoints from "./MapLayers/ShipWrecksPoints";
 
 import SideMenu from "./UI/SideMenu";
+import MapMenu from "./UI/MapMenu";
 
 import "mapbox-gl/dist/mapbox-gl.css";
 
@@ -27,19 +28,25 @@ const Map = forwardRef((Props, ref) => {
   const mapContainerRef = useRef(null);
   const mapRef = useRef(null);
 
-  const layers = ["H3_6HexLayer","SmallHexLayer","MidHexLayer","BigHexLayer"];
+  const layers = ["H3_6HexLayer","H3_5HexLayer","H3_7HexLayer","BigHexLayer"];
 
   useEffect(() => {
     if (mapRef.current) return; // initialize map only once
 
     mapRef.current = new mapboxgl.Map({
       container: mapContainerRef.current,
-      //style: "mapbox://styles/mapbox/dark-v11", // or satellite-streets-v12
+      style: "mapbox://styles/obiwuji/cmgqlgnco001501s8aut0245o", // or satellite-streets-v12
       // center: [-61.2872, 13.1568], // Saint Vincent coordinates
-      zoom: 1.5,
+      zoom: 2,
+      
     });
 
     mapRef.current.on("load", () => {
+
+      console.log(mapRef.current.getStyle().layers.map(l => l.id));
+
+      // mapRef.current.setPaintProperty('water', 'fill-color', '#09282E');
+      // mapRef.current.setPaintProperty('land', 'fill-color', '#FFDC4E');
 
       mapRef.current.scrollZoom.disable();
       mapRef.current.doubleClickZoom.disable();
@@ -53,21 +60,14 @@ const Map = forwardRef((Props, ref) => {
 
 
       // Add layers here
-      ShipWrecksPoints(mapRef.current);
+      //ShipWrecksPoints(mapRef.current);
       layerIdsRef.current["H3_6HexLayer"] = H3_6HexLayer(mapRef.current, "h3_6", activeLayer === "H3_6HexLayer");
-      layerIdsRef.current["SmallHexLayer"] = SmallHexLayer(mapRef.current, "small", activeLayer === "SmallHexLayer");
-      layerIdsRef.current["MidHexLayer"] = MidHexLayer(mapRef.current, "mid", activeLayer === "MidHexLayer");
+      layerIdsRef.current["H3_5HexLayer"] = H3_5HexLayer(mapRef.current, "h3_5", activeLayer === "H3_5HexLayer");
+      layerIdsRef.current["H3_7HexLayer"] = H3_7HexLayer(mapRef.current, "h3_7", activeLayer === "H3_7HexLayer");
       layerIdsRef.current["BigHexLayer"] = BigHexLayer(mapRef.current, "big", activeLayer === "BigHexLayer");
 
       setMap(mapRef.current);
     });
-
-    // Optional: Add navigation controls
-    //mapRef.current.addControl(new mapboxgl.NavigationControl(), "top-right");
-
-    // return () => {
-    //   mapRef.current.remove()
-    // }
 
   }, []);
 
@@ -117,7 +117,7 @@ const Map = forwardRef((Props, ref) => {
       className="map-container"
       style={{ width: "100%", height: "100vh" }}
     >
-      {layers.map((layer, index) => (
+      {/* {layers.map((layer, index) => (
         <button
           key={layer}
           onClick={() => setActiveLayer(layer)}
@@ -136,7 +136,14 @@ const Map = forwardRef((Props, ref) => {
           }}
           >{layer.charAt(0).toUpperCase() + layer.slice(1)}
       </button> 
-    ))}
+    ))} */}
+
+    <MapMenu
+      activeLayer={activeLayer}
+      setActiveLayer={setActiveLayer}
+      layers={layers}
+      mapRef={mapRef}
+      />
 
     <SideMenu
       feature={selectedFeature}

@@ -1,4 +1,6 @@
-export default function BigHexLayer(map, idPrefix = "mid", visible = true) {
+import addMapHover from "../../Utils/addMapHover";
+
+export default function BigHexLayer(map, idPrefix = "h3_7", visible = true) {
 
   const sourceid = `${idPrefix}-hexagons`;
   const fillLayerId = `${idPrefix}-hexagons-fill`;
@@ -6,7 +8,7 @@ export default function BigHexLayer(map, idPrefix = "mid", visible = true) {
 
   map.addSource(sourceid, {
     type: "geojson",
-    data: "/Data/PairwiseClipH3_FeaturesToJSO.geojson",
+    data: "/Data/FeaturesToJSON_OutJsonFile_H3_7_depth_wrecks.geojson",
   });
 
   map.addLayer({
@@ -32,20 +34,7 @@ export default function BigHexLayer(map, idPrefix = "mid", visible = true) {
   });
 
   // Hover effect
-  map.on("mousemove", fillLayerId, (e) => {
-    if (e.features.length > 0) {
-        map.getCanvas().style.cursor = "pointer";
-
-        // Example: highlight on hover
-        map.setPaintProperty(fillLayerId, "fill-color", [
-          "case",
-          ["==", ["get", "GRID_ID"], e.features[0].properties.GRID_ID],
-          "#f00",
-          "#088",
-        ]);
-      }
-    }
-  );
+  addMapHover(map, fillLayerId, "#44DBDA");
 
   map.on("click", fillLayerId, (e) => {
     if (e.features.length > 0) {
@@ -55,11 +44,6 @@ export default function BigHexLayer(map, idPrefix = "mid", visible = true) {
         map.__setSelectedFeature(featureProps);
       }
     }
-  });
-  
-  map.on("mouseleave", fillLayerId, () => {
-    map.getCanvas().style.cursor = "";
-    map.setPaintProperty(fillLayerId, "fill-color", "#088");
   });
 
   return {sourceid, fillLayerId, outlineLayerId}

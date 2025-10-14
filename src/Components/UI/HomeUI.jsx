@@ -48,6 +48,7 @@ export default function HomeUI({zoomedIn, zoomToSaintVincent, goHome}) {
     return (
         <div
         style={{
+            backgroundColor: "#00373783",
             position: 'absolute',
             top: 0,
             left: 0,
@@ -60,45 +61,27 @@ export default function HomeUI({zoomedIn, zoomToSaintVincent, goHome}) {
             zIndex: 1, // Ensure it's above the map
         }}
         >
-            <h1 
-            className="HomeUIHeader"
-            ref={titleRef}
-            style={{
-              textAlign: "center",
-              marginBottom: "1rem",
-              opacity: 1,
-              pointerEvents: "auto",
-            }}>
-                Welcome To The Experience</h1>
-            <button 
-            className="gotoSV"
-            ref={zoomButtonRef}
-            onClick={zoomToSaintVincent}
-            style={{
-              padding: "0.8rem 1.2rem",
-              fontSize: "1rem",
-              borderRadius: "6px",
-              cursor: "pointer",
-              opacity: 1,
-              pointerEvents: "auto",
-            }}
-            >Explore
-            </button>
+
+            <div ref={titleRef} className="HomeUIContent">
+                <img className="HomeLogo" src="/Subtract_white.svg" alt="HexExplorer Logo" />
+                <h1 className="HomeUIHeader">Hexplorer</h1>
+                <p className="HomeUISubheader">Join the mission to map St. Vincent's unexplored ocean territories. Become an ocean explorer, discover hidden treasures, and help preserve our marine heritage for future generations.</p>
+                <div className="HomeUIButtons">
+                   <button 
+                    className="gotoSV"
+                    ref={zoomButtonRef}
+                    onClick={zoomToSaintVincent}
+                    >Explore
+                    </button> 
+                    <button
+                    className="LearnMore"
+                    >Learn More</button>
+                </div>
+            </div>
             <button 
             className="gotoHome"
             ref={homeButtonRef}
             onClick={goHome} 
-            style={{
-                position: "absolute",
-                top: "5%",
-                left: "2%",
-                padding: "0.8rem 1.2rem",
-                fontSize: "1rem",
-                borderRadius: "6px",
-                cursor: "pointer",
-                opacity: 0,
-                pointerEvents: "auto",
-            }}
             >
             Home
             </button>

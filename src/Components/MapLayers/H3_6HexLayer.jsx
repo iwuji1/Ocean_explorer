@@ -1,3 +1,5 @@
+import addMapHover from "../../Utils/addMapHover";
+
 export default function BigHexLayer(map, idPrefix = "h3_6", visible = true) {
 
   const sourceid = `${idPrefix}-hexagons`;
@@ -30,22 +32,10 @@ export default function BigHexLayer(map, idPrefix = "h3_6", visible = true) {
       "line-width": 1,
     },
   });
+  
 
   // Hover effect
-  map.on("mousemove", fillLayerId, (e) => {
-    if (e.features.length > 0) {
-        map.getCanvas().style.cursor = "pointer";
-
-        // Example: highlight on hover
-        map.setPaintProperty(fillLayerId, "fill-color", [
-          "case",
-          ["==", ["get", "GRID_ID"], e.features[0].properties.GRID_ID],
-          "#f00",
-          "#088",
-        ]);
-      }
-    }
-  );
+  addMapHover(map, fillLayerId, "#44DBDA");
 
     map.on("click", fillLayerId, (e) => {
     if (e.features.length > 0) {
@@ -55,11 +45,6 @@ export default function BigHexLayer(map, idPrefix = "h3_6", visible = true) {
         map.__setSelectedFeature(featureProps);
       }
     }
-  });
-  
-  map.on("mouseleave", fillLayerId, () => {
-    map.getCanvas().style.cursor = "";
-    map.setPaintProperty(fillLayerId, "fill-color", "#088");
   });
 
   return {sourceid, fillLayerId, outlineLayerId}
