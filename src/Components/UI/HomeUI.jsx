@@ -1,13 +1,13 @@
 import { useRef, useEffect } from "react";
 import { gsap } from "gsap";
 
-export default function HomeUI({zoomedIn, zoomToSaintVincent, goHome}) {
+export default function HomeUI({zoomedIn, zoomToSaintVincent}) {
     const titleRef = useRef(null);
     const zoomButtonRef = useRef(null);
     const homeButtonRef = useRef(null);
 
     useEffect(() => {
-        if (!titleRef.current || !zoomButtonRef.current || !homeButtonRef.current) return;
+        if (!titleRef.current || !zoomButtonRef.current) return;
 
         if (zoomedIn) {
         // Fade OUT welcome + zoom button
@@ -17,22 +17,7 @@ export default function HomeUI({zoomedIn, zoomToSaintVincent, goHome}) {
             delay: 1.2, // <- sync this with the map flyTo duration
             pointerEvents: "none",
         });
-
-        // Fade IN home button after
-        gsap.to(homeButtonRef.current, {
-            opacity: 1, 
-            duration: 0.8, 
-            delay: 1.4, 
-            pointerEvents: "auto" 
-        });
-        } else {
-        // Fade OUT home button
-        gsap.to(homeButtonRef.current, {
-            opacity: 0,
-            duration: 0.5,
-            pointerEvents: "none",
-        });
-
+    } else {
         // Fade IN welcome + zoom button
         gsap.to([titleRef.current, zoomButtonRef.current],
             { 
@@ -78,13 +63,6 @@ export default function HomeUI({zoomedIn, zoomToSaintVincent, goHome}) {
                     >Learn More</button>
                 </div>
             </div>
-            <button 
-            className="gotoHome"
-            ref={homeButtonRef}
-            onClick={goHome} 
-            >
-            Home
-            </button>
             </div>
     );
 }

@@ -1,5 +1,6 @@
 import { forwardRef, useImperativeHandle, useEffect, useRef, useState, act } from "react";
 import mapboxgl from "mapbox-gl";
+import { gsap } from "gsap";
 
 import BigHexLayer from "./MapLayers/BigHexLayer";
 import H3_7HexLayer from "./MapLayers/H3_7HexLayer";
@@ -19,8 +20,7 @@ const Map = forwardRef((Props, ref) => {
   const [map, setMap] = useState(null);
   const [activeLayer, setActiveLayer] = useState("BigHexLayer");
   const [selectedFeature, setSelectedFeature] = useState(null);
-
-
+  const MapMenuRef = useRef(null);
 
   // Store layer IDs for toggling
   const layerIdsRef = useRef({});
@@ -42,11 +42,6 @@ const Map = forwardRef((Props, ref) => {
     });
 
     mapRef.current.on("load", () => {
-
-      console.log(mapRef.current.getStyle().layers.map(l => l.id));
-
-      // mapRef.current.setPaintProperty('water', 'fill-color', '#09282E');
-      // mapRef.current.setPaintProperty('land', 'fill-color', '#FFDC4E');
 
       mapRef.current.scrollZoom.disable();
       mapRef.current.doubleClickZoom.disable();
@@ -78,13 +73,28 @@ const Map = forwardRef((Props, ref) => {
     Object.entries(layerIdsRef.current).forEach(([name, ids]) => {
       const visibility = name === activeLayer ? "visible" : "none";
 
-      console.log(activeLayer);
-
       // Set visibility for both fill and outline layers
       if (map.getLayer(ids.fillLayerId)) map.setLayoutProperty(ids.fillLayerId, "visibility", visibility);
       if (map.getLayer(ids.outlineLayerId)) map.setLayoutProperty(ids.outlineLayerId, "visibility", visibility);
     });
   }, [map, activeLayer]);
+
+  useEffect(() => {
+    if (Props.zoomedIn) {
+      gsap.to(MapMenuRef.current, {
+        opacity: 1,
+        duration: 0.8,
+        delay: 1.4,
+        pointerEvents: "auto",
+      });
+    } else {
+      gsap.to(MapMenuRef.current, {
+        opacity: 0,
+        duration: 0.5,
+        pointerEvents: "none",
+      });
+    }
+  }, [Props.zoomedIn]);
 
   //Zoom to destination
   useImperativeHandle(ref, () => ({
@@ -117,32 +127,13 @@ const Map = forwardRef((Props, ref) => {
       className="map-container"
       style={{ width: "100%", height: "100vh" }}
     >
-      {/* {layers.map((layer, index) => (
-        <button
-          key={layer}
-          onClick={() => setActiveLayer(layer)}
-          style={{
-            position: 'absolute',
-            top: 50,
-            left: 500 + (index * 120),
-            zIndex: 20,
-            backgroundColor: activeLayer === layer ? '#1978c8' : '#fff',
-            color: activeLayer === layer ? '#fff' : '#000',
-            border: 'none',
-            padding: '8px 12px',
-            cursor: 'pointer',
-            borderRadius: '4px',
-            boxShadow: '0 1px 4px rgba(0,0,0,0.3)',
-          }}
-          >{layer.charAt(0).toUpperCase() + layer.slice(1)}
-      </button> 
-    ))} */}
 
     <MapMenu
+      ref={MapMenuRef}
       activeLayer={activeLayer}
       setActiveLayer={setActiveLayer}
       layers={layers}
-      mapRef={mapRef}
+      goHome={Props.goHome}
       />
 
     <SideMenu

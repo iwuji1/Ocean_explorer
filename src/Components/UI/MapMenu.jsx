@@ -2,11 +2,12 @@ import { useState } from "react";
 import HamburgerIcon from "../../assets/menu_24px.svg";
 import CloseIcon from "../../assets/close_24px.svg";
 
-export default function MapMenu({activeLayer, setActiveLayer, layers, mapRef}) {
+export default function MapMenu({ref, activeLayer, setActiveLayer, layers, goHome}) {
     const [open, setOpen] = useState(false);
 
     return (
-        <div className="MapMenu">
+        <div ref={ref}
+            className="MapMenu">
             <button className="menu-button" 
             onClick={() => setOpen(!open)}
             style={{
@@ -23,8 +24,7 @@ export default function MapMenu({activeLayer, setActiveLayer, layers, mapRef}) {
 
             {open && (
                 <div className="menu-content">
-                    {console.log(mapRef)}
-                    <button className="gotoHome" onClick={() => {mapRef.current?.flyToHP(); setOpen(false);}}>
+                    <button className="gotoHome" onClick={goHome}>
                         Home
                     </button>
                     <div>
@@ -39,7 +39,7 @@ export default function MapMenu({activeLayer, setActiveLayer, layers, mapRef}) {
                                 padding: "6px 8px",
                                 marginBottom: "4px",
                                 background:
-                                    activeLayer === layer ? "#1978c8" : "transparent",
+                                    activeLayer === layer ? "#003737" : "transparent",
                                 color: activeLayer === layer ? "#fff" : "#000",
                                 border: "1px solid #ccc",
                                 borderRadius: "6px",

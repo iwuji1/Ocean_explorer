@@ -22,11 +22,10 @@ function App() {
   return (
     <>
 
-      <Map ref={mapRef}/>
+      <Map ref={mapRef} goHome={goHome} zoomedIn={zoomedIn}/>
       <HomeUI 
         zoomedIn={zoomedIn} 
-        zoomToSaintVincent={zoomToSaintVincent} 
-        goHome={goHome}
+        zoomToSaintVincent={zoomToSaintVincent}
       />
     </>
   );

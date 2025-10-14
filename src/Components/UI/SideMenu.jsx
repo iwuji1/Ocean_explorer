@@ -1,3 +1,5 @@
+import CloseIcon from "../../assets/close_24px.svg";
+
 export default function SideMenu({feature, onClose }) {
     if (!feature) return null;
 
@@ -26,7 +28,7 @@ export default function SideMenu({feature, onClose }) {
                     cursor: "pointer",
                     }}
                 >
-                    X
+                    <img src={CloseIcon} alt="Close" style={{ width: 24, height: 24 }} />
                     </button>
             <h3>Hex Details</h3>
             <pre style={{ whiteSpace: "pre-wrap", wordWrap: "break-word" }}>
