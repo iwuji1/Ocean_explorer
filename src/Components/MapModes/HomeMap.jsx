@@ -3,6 +3,7 @@ import mapboxgl from "mapbox-gl";
 import { useNavigate } from "react-router-dom";
 import { UserAuth } from "../../context/AuthContext";
 import HomeUI from "../UI/HomeUI";
+import H3_5FamilyLayer from "../MapLayers/H3_5_Family";
 
 import { gsap } from "gsap";
 
@@ -18,18 +19,18 @@ export default function HomeMap() {
     const mapContainerRef = useRef(null);
     const mapRef = useRef(null);
 
-      useEffect(() => {
-    if (mapRef.current) return; // initialize map only once
+    useEffect(() => {
+      if (mapRef.current) return; // initialize map only once
 
-    mapRef.current = new mapboxgl.Map({
-      container: mapContainerRef.current,
-      style: "mapbox://styles/obiwuji/cmgqlgnco001501s8aut0245o", // or satellite-streets-v12
-      // center: [-61.2872, 13.1568], // Saint Vincent coordinates
-      zoom: 2,
-      
-    });
+      mapRef.current = new mapboxgl.Map({
+        container: mapContainerRef.current,
+        style: "mapbox://styles/obiwuji/cmgqlgnco001501s8aut0245o", // or satellite-streets-v12
+        // center: [-61.2872, 13.1568], // Saint Vincent coordinates
+        zoom: 2,
+        
+      });
 
-    mapRef.current.on("load", () => {
+      mapRef.current.on("load", () => {
 
       mapRef.current.scrollZoom.disable();
       mapRef.current.doubleClickZoom.disable();
@@ -40,6 +41,8 @@ export default function HomeMap() {
       mapRef.current.touchZoomRotate.disable();
 
       setMap(mapRef.current);
+
+      console.log(mapRef.current)
     });
 
   }, []);

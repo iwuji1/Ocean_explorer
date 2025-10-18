@@ -31,7 +31,7 @@ export default function SideMenu({feature, onClose }) {
                     <img src={CloseIcon} alt="Close" style={{ width: 24, height: 24 }} />
                     </button>
             <h3>Hex Details</h3>
-            <pre style={{ whiteSpace: "pre-wrap", wordWrap: "break-word" }}>
+            <pre style={{ whiteSpace: "pre-wrap", wordWrap: "break-word", color: "#333", fontSize: "14px" }}>
                 {JSON.stringify(feature, null, 2)}
             </pre>
             </div>

@@ -7,6 +7,11 @@ import BigHexLayer from "../MapLayers/BigHexLayer";
 import H3_7HexLayer from "../MapLayers/H3_7HexLayer";
 import H3_5HexLayer from "../MapLayers/H3_5HexLayer";
 import H3_6HexLayer from "../MapLayers/H3_6HexLayer";
+
+import H3_5FamilyLayer from "../MapLayers/H3_5_Family";
+import H3_6FamilyLayer from "../MapLayers/H3_6_Family";
+import H3_7FamilyLayer from "../MapLayers/H3_7_Family";
+
 import ShipWrecksPoints from "../MapLayers/ShipWrecksPoints";
 
 import { UserAuth } from "../../context/AuthContext";
@@ -36,7 +41,7 @@ export default function MainMap() {
   const mapContainerRef = useRef(null);
   const mapRef = useRef(null);
 
-  const layers = ["H3_6HexLayer","H3_5HexLayer","H3_7HexLayer","BigHexLayer"];
+  const layers = ["BigHexLayer", "H3_5FamilyLayer", "H3_6FamilyLayer", "H3_7FamilyLayer"];
 
   useEffect(() => {
     if (mapRef.current) return; // initialize map only once
@@ -46,14 +51,13 @@ export default function MainMap() {
       style: "mapbox://styles/obiwuji/cmgqlgnco001501s8aut0245o", // or satellite-streets-v12
       // center: [-61.2872, 13.1568], // Saint Vincent coordinates
       zoom: 2,
+      maxZoom: 15,
+      minZoom: 2
       
     });
 
     mapRef.current.on("load", () => {
 
-      mapRef.current.scrollZoom.disable();
-      mapRef.current.doubleClickZoom.disable();
-      mapRef.current.boxZoom.disable();
       mapRef.current.dragRotate.disable();
       mapRef.current.dragPan.disable();
       mapRef.current.keyboard.disable();
@@ -64,10 +68,10 @@ export default function MainMap() {
 
       // Add layers here
       //ShipWrecksPoints(mapRef.current);
-      layerIdsRef.current["H3_6HexLayer"] = H3_6HexLayer(mapRef.current, "h3_6", activeLayer === "H3_6HexLayer");
-      layerIdsRef.current["H3_5HexLayer"] = H3_5HexLayer(mapRef.current, "h3_5", activeLayer === "H3_5HexLayer");
-      layerIdsRef.current["H3_7HexLayer"] = H3_7HexLayer(mapRef.current, "h3_7", activeLayer === "H3_7HexLayer");
-      layerIdsRef.current["BigHexLayer"] = BigHexLayer(mapRef.current, "big", activeLayer === "BigHexLayer");
+      layerIdsRef.current["BigHexLayer"] = BigHexLayer(mapRef.current, activeLayer === "BigHexLayer");
+      layerIdsRef.current["H3_5FamilyLayer"] = H3_5FamilyLayer(mapRef.current, "h5_family", activeLayer === "H3_5FamilyLayer");
+      layerIdsRef.current["H3_6FamilyLayer"] = H3_5FamilyLayer(mapRef.current, "h6_family", activeLayer === "H3_6FamilyLayer");
+      layerIdsRef.current["H3_7FamilyLayer"] = H3_5FamilyLayer(mapRef.current, "h7_family", activeLayer === "H3_7FamilyLayer");
 
       setMap(mapRef.current);
     });
@@ -156,19 +160,19 @@ export default function MainMap() {
         handleLogout={handleSignOut}
       />
 
-    <MapMenu
-      ref={MapMenuRef}
-      activeLayer={activeLayer}
-      setActiveLayer={setActiveLayer}
-      layers={layers}
-      goHome={flyToHP}
-      handleLogout={handleSignOut}
+      <MapMenu
+        ref={MapMenuRef}
+        activeLayer={activeLayer}
+        setActiveLayer={setActiveLayer}
+        layers={layers}
+        goHome={flyToHP}
+        handleLogout={handleSignOut}
       />
 
-    <SideMenu
-      feature={selectedFeature}
-      onClose={() => setSelectedFeature(null)}
-    />
+      <SideMenu
+        feature={selectedFeature}
+        onClose={() => setSelectedFeature(null)}
+      />
       
     </div>
   );
