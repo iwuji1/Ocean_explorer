@@ -1,7 +1,7 @@
 import { createBrowserRouter } from "react-router-dom";
 import App from "./App";
 import Signup from "./Components/UAuth/Signup";
-import Signin from "./Components/UAuth/signin";
+import Signin from "./Components/UAuth/Signin";
 import Dashboard from "./Components/UAuth/Dashboard";
 import PrivateRoute from "./Components/UAuth/PrivateRoute";
 import HomeMap from "./Components/MapModes/HomeMap";
