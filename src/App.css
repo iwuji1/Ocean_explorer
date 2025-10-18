@@ -116,7 +116,7 @@ button.gotoHome {
 }
 
 p {
-  font-family: "EB Garamond", serif;
+  font-family: "garamond", serif;
   font-optical-sizing: auto;
   font-weight: 200;
   font-style: normal;
@@ -207,4 +207,54 @@ img.HomeLogo {
   margin-bottom: 10px;
   padding: 8px;
   border-radius: 8px;
+}
+
+.LogoutButton {
+  background-color: #004f4f;
+  color: white;
+  font-size: 0.9rem;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.LogoutButton:hover {
+  background-color: #006666;
+}
+
+.HMLogoutButton {
+  position: absolute;
+  top: 5%;
+  left: 2%;
+  background-color: #004f4f;
+  color: white;
+  font-size: 0.9rem;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  z-index: 55;
+  cursor: pointer;
+}
+
+.form-container {
+  width: 40vw;
+
+}
+
+input[type=text], input[type=password] {
+  width: 100%;
+  padding: 15px;
+  margin: 5px 0 22px 0;
+  display: inline-block;
+  border: none;
+  background: #f1f1f1;
+}
+
+input[type=text]:focus, input[type=password]:focus {
+  background-color: #ddd;
+  outline: none;
 }

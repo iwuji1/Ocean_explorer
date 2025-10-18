@@ -1,34 +1,18 @@
 
-import { useEffect, useRef, useState } from 'react'
 import './App.css'
 
-import Map from "./Components/map.jsx";
-import HomeUI from "./Components/UI/HomeUI.jsx";
+import AuthRedirectListener from './Components/UAuth/AuthRedirectListener.jsx';
 
-function App() {
-  const mapRef = useRef(null);
-  const [zoomedIn, setZoomedIn] = useState(false);
+//import useAuthListener from './hooks/useAuthListener.js'
 
-  const zoomToSaintVincent = () => {
-    mapRef.current.flyToSaintVincent();
-    setZoomedIn(true); // update UI state
-  };
+  export default function App() {
+    // const { user, loading } = useAuthListener();
 
-  const goHome = () => {
-    mapRef.current.flyToHP(); // you can implement a flyToHome in Map
-    setZoomedIn(false);
-  };
+    //  if (loading) return <p>Loading...</p>;
 
-  return (
-    <>
 
-      <Map ref={mapRef} goHome={goHome} zoomedIn={zoomedIn}/>
-      <HomeUI 
-        zoomedIn={zoomedIn} 
-        zoomToSaintVincent={zoomToSaintVincent}
-      />
+    return (<>
+    <AuthRedirectListener />
     </>
-  );
-}
-
-export default App
+    );
+  }

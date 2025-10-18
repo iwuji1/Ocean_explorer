@@ -2,7 +2,7 @@ import { useState } from "react";
 import HamburgerIcon from "../../assets/menu_24px.svg";
 import CloseIcon from "../../assets/close_24px.svg";
 
-export default function MapMenu({ref, activeLayer, setActiveLayer, layers, goHome}) {
+export default function MapMenu({ref, activeLayer, setActiveLayer, layers, goHome, handleLogout}) {
     const [open, setOpen] = useState(false);
 
     return (
@@ -26,6 +26,10 @@ export default function MapMenu({ref, activeLayer, setActiveLayer, layers, goHom
                 <div className="menu-content">
                     <button className="gotoHome" onClick={goHome}>
                         Home
+                    </button>
+
+                    <button className="LogoutButton" onClick={handleLogout}>
+                        Logout
                     </button>
                     <div>
                         <h3>Layers</h3>

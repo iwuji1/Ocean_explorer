@@ -1,26 +1,34 @@
-import { forwardRef, useImperativeHandle, useEffect, useRef, useState, act } from "react";
+import { useEffect, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import { gsap } from "gsap";
 
-import BigHexLayer from "./MapLayers/BigHexLayer";
-import H3_7HexLayer from "./MapLayers/H3_7HexLayer";
-import H3_5HexLayer from "./MapLayers/H3_5HexLayer";
-import H3_6HexLayer from "./MapLayers/H3_6HexLayer";
-import ShipWrecksPoints from "./MapLayers/ShipWrecksPoints";
 
-import SideMenu from "./UI/SideMenu";
-import MapMenu from "./UI/MapMenu";
+import BigHexLayer from "../MapLayers/BigHexLayer";
+import H3_7HexLayer from "../MapLayers/H3_7HexLayer";
+import H3_5HexLayer from "../MapLayers/H3_5HexLayer";
+import H3_6HexLayer from "../MapLayers/H3_6HexLayer";
+import ShipWrecksPoints from "../MapLayers/ShipWrecksPoints";
+
+import { UserAuth } from "../../context/AuthContext";
+
+import SideMenu from "../UI/SideMenu";
+import MapMenu from "../UI/MapMenu";
 
 import "mapbox-gl/dist/mapbox-gl.css";
+import HomeUI from "../UI/HomeUI";
 
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
 
-const Map = forwardRef((Props, ref) => {
+export default function MainMap() {
+  const { session, signOut } = UserAuth();
+  const user = session?.user || null;
 
   const [map, setMap] = useState(null);
   const [activeLayer, setActiveLayer] = useState("BigHexLayer");
   const [selectedFeature, setSelectedFeature] = useState(null);
   const MapMenuRef = useRef(null);
+
+  const [zoomedIn, setZoomedIn] = useState(false);
 
   // Store layer IDs for toggling
   const layerIdsRef = useRef({});
@@ -80,7 +88,7 @@ const Map = forwardRef((Props, ref) => {
   }, [map, activeLayer]);
 
   useEffect(() => {
-    if (Props.zoomedIn) {
+    if (zoomedIn) {
       gsap.to(MapMenuRef.current, {
         opacity: 1,
         duration: 0.8,
@@ -94,11 +102,10 @@ const Map = forwardRef((Props, ref) => {
         pointerEvents: "none",
       });
     }
-  }, [Props.zoomedIn]);
+  }, [zoomedIn]);
 
   //Zoom to destination
-  useImperativeHandle(ref, () => ({
-    flyToSaintVincent() {
+    const flyToSaintVincent = () => {
       if (!mapRef.current) return;
       mapRef.current.flyTo({
         center: [-61.2872, 13.1568],
@@ -107,8 +114,11 @@ const Map = forwardRef((Props, ref) => {
         curve: 1.5,
         essential: true, // this animation is considered essential with respect to prefers-reduced-motion
       });
-    },
-    flyToHP() {
+
+      setZoomedIn(true);
+    };
+
+    const flyToHP = () => {
       if (!mapRef.current) return;
       mapRef.current.flyTo({
         center: [0,0],
@@ -117,8 +127,19 @@ const Map = forwardRef((Props, ref) => {
         curve: 1.2,
         essential: true, // this animation is considered essential with respect to prefers-reduced-motion
       });
+
+      setZoomedIn(false);
+    };
+
+    const handleSignOut = async (e) => {
+      e.preventDefault()
+        try {
+            await signOut()
+            navigate("/")
+        } catch (err) {
+            console.error(err);
+        }
     }
-  }));
 
   return (
     <div
@@ -128,12 +149,20 @@ const Map = forwardRef((Props, ref) => {
       style={{ width: "100%", height: "100vh" }}
     >
 
+      <HomeUI
+        zoomedIn={zoomedIn}
+        zoomToSaintVincent={flyToSaintVincent}
+        user={user}
+        handleLogout={handleSignOut}
+      />
+
     <MapMenu
       ref={MapMenuRef}
       activeLayer={activeLayer}
       setActiveLayer={setActiveLayer}
       layers={layers}
-      goHome={Props.goHome}
+      goHome={flyToHP}
+      handleLogout={handleSignOut}
       />
 
     <SideMenu
@@ -143,6 +172,4 @@ const Map = forwardRef((Props, ref) => {
       
     </div>
   );
-});
-
-export default Map;
+};

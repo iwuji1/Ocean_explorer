@@ -1,17 +1,19 @@
 import { useRef, useEffect } from "react";
 import { gsap } from "gsap";
+import { useNavigate } from "react-router-dom";
 
-export default function HomeUI({zoomedIn, zoomToSaintVincent}) {
+export default function HomeUI({zoomedIn, zoomToSaintVincent, user, handleLogout}) {
     const titleRef = useRef(null);
     const zoomButtonRef = useRef(null);
-    const homeButtonRef = useRef(null);
+    const logoutButtonRef = useRef(null);
+    const navigate = useNavigate();
 
     useEffect(() => {
         if (!titleRef.current || !zoomButtonRef.current) return;
 
         if (zoomedIn) {
         // Fade OUT welcome + zoom button
-        gsap.to([titleRef.current, zoomButtonRef.current], {
+        gsap.to([titleRef.current, zoomButtonRef.current, logoutButtonRef.current], {
             opacity: 0,
             duration: 1,
             delay: 1.2, // <- sync this with the map flyTo duration
@@ -19,7 +21,7 @@ export default function HomeUI({zoomedIn, zoomToSaintVincent}) {
         });
     } else {
         // Fade IN welcome + zoom button
-        gsap.to([titleRef.current, zoomButtonRef.current],
+        gsap.to([titleRef.current, zoomButtonRef.current, logoutButtonRef.current],
             { 
                 opacity: 1, 
                 duration: 0.8, 
@@ -28,6 +30,18 @@ export default function HomeUI({zoomedIn, zoomToSaintVincent}) {
             });
         }
     }, [zoomedIn]);
+
+    // --- Dynamic Button Action ---
+  const handleMainButtonClick = () => {
+    if (user) {
+      // If logged in → go explore
+      zoomToSaintVincent();
+    } else {
+      // If not logged in → go to sign-in page
+      navigate("/signin");
+    }
+  };
+
 
 
     return (
@@ -43,7 +57,7 @@ export default function HomeUI({zoomedIn, zoomToSaintVincent}) {
             flexDirection: 'column',
             alignItems: 'center',
             pointerEvents: 'none', // Allow clicks to pass through
-            zIndex: 1, // Ensure it's above the map
+            zIndex: 10, // Ensure it's above the map
         }}
         >
 
@@ -55,14 +69,22 @@ export default function HomeUI({zoomedIn, zoomToSaintVincent}) {
                    <button 
                     className="gotoSV"
                     ref={zoomButtonRef}
-                    onClick={zoomToSaintVincent}
-                    >Explore
+                    onClick={handleMainButtonClick}
+                    >{user ? "Explore St. Vincent" : "Sign In"}
                     </button> 
-                    <button
-                    className="LearnMore"
-                    >Learn More</button>
+                    <button className="LearnMore">Learn More</button>
+                    
                 </div>
             </div>
-            </div>
+            {user && (
+                <button
+                className="HMLogoutButton"
+                ref={logoutButtonRef}
+                onClick={handleLogout}
+                >
+                Logout
+                </button>
+            )}
+        </div>
     );
 }

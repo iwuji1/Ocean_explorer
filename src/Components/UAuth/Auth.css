@@ -1,0 +1,57 @@
+.auth-container {
+    display: flex;
+    flex-direction: column;
+    width: auto;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    gap: 10px;
+}
+
+h2 {
+    color: #004f4f;
+    font-family: "garamond", serif;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    font-size: 50px;
+}
+
+.form-container {
+    display: flex;
+    flex-direction: column;
+    width: auto;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    gap: 10px;
+
+}
+
+input[type=email], input[type=password], input[type=full_name] {
+  width: 100%;
+  padding: 15px;
+  margin: 5px 0 22px 0;
+  display: inline-block;
+  border: none;
+  background: #f1f1f1;
+}
+
+input[type=email]:focus, input[type=password]:focus, input[type=full_name]:focus {
+  background-color: #ddd;
+  outline: none;
+}
+
+.signOutbtn {
+  background-color: #004f4f;
+  color: white;
+  font-size: 0.9rem;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.signOutbtn:hover {
+  background-color: #006666;
+}
