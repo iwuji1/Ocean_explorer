@@ -39,9 +39,10 @@ export default function H3_7FamilyLayer(map, idPrefix = "h7_family", visible = t
     map.on("click", fillLayerId, (e) => {
         if (e.features.length > 0) {
         const featureProps = e.features[0].properties;
+        const layerData = {...featureProps, layerLevel: idPrefix}
         // Send to parent
         if (typeof map.__setSelectedFeature === "function") {
-            map.__setSelectedFeature(featureProps);
+            map.__setSelectedFeature(layerData);
             }
         }
     });

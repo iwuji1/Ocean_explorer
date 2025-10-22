@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../supabaseClient'
 
-export default function Avatar({ url, size, onUpload }) {
+export default function Avatar({ url, size, onUpload, onDelete }) {
   const [avatarUrl, setAvatarUrl] = useState(null)
   const [uploading, setUploading] = useState(false)
 
@@ -49,6 +49,17 @@ export default function Avatar({ url, size, onUpload }) {
     }
   }
 
+  async function deleteAvatar() {
+    if (!url) return
+    const {error} = await supabase.storage.from('avatars').remove([url])
+    if (error) {
+      console.log('Error deleting image: ', error.message)
+    } else {
+      setAvatarUrl(null)
+      onDelete()
+    }
+  }
+
   return (
     <div>
       {avatarUrl ? (
@@ -56,7 +67,7 @@ export default function Avatar({ url, size, onUpload }) {
           src={avatarUrl}
           alt="Avatar"
           className="avatar image"
-          style={{ height: size, width: size }}
+          style={{ height: size, width: size, borderRadius: "50%" }}
         />
       ) : (
         <div className="avatar no-image" style={{ height: size, width: size }} />
@@ -65,6 +76,9 @@ export default function Avatar({ url, size, onUpload }) {
         <label className="button primary block" htmlFor="single">
           {uploading ? 'Uploading ...' : 'Upload'}
         </label>
+        <button className="button danger block" onClick={deleteAvatar}>
+          Delete
+        </button>
         <input
           style={{
             visibility: 'hidden',

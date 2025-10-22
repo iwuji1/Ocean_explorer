@@ -1,13 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import { gsap } from "gsap";
-
+import { supabase } from "../../supabaseClient";
+import { useNavigate } from "react-router-dom";
 
 import BigHexLayer from "../MapLayers/BigHexLayer";
-import H3_7HexLayer from "../MapLayers/H3_7HexLayer";
-import H3_5HexLayer from "../MapLayers/H3_5HexLayer";
-import H3_6HexLayer from "../MapLayers/H3_6HexLayer";
-
 import H3_5FamilyLayer from "../MapLayers/H3_5_Family";
 import H3_6FamilyLayer from "../MapLayers/H3_6_Family";
 import H3_7FamilyLayer from "../MapLayers/H3_7_Family";
@@ -18,9 +15,10 @@ import { UserAuth } from "../../context/AuthContext";
 
 import SideMenu from "../UI/SideMenu";
 import MapMenu from "../UI/MapMenu";
+import LeftMenu from "../UI/LeftMenu";
+import HomeUI from "../UI/HomeUI";
 
 import "mapbox-gl/dist/mapbox-gl.css";
-import HomeUI from "../UI/HomeUI";
 
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
 
@@ -31,21 +29,24 @@ export default function MainMap() {
   const [map, setMap] = useState(null);
   const [activeLayer, setActiveLayer] = useState("BigHexLayer");
   const [selectedFeature, setSelectedFeature] = useState(null);
+  const [hexFundingData, setHexFundingData] = useState({ hexData: {}, ownershipData: [] });
+  const [menuOpen, setMenuOpen] = useState(false);
+  
   const MapMenuRef = useRef(null);
+  const LeftMenuRef = useRef(null);
+  const layerIdsRef = useRef({});
+  const mapRef = useRef(null);
+  const mapContainerRef = useRef(null);
 
   const [zoomedIn, setZoomedIn] = useState(false);
+  const navigate = useNavigate();
 
   // Store layer IDs for toggling
-  const layerIdsRef = useRef({});
-
-  const mapContainerRef = useRef(null);
-  const mapRef = useRef(null);
 
   const layers = ["BigHexLayer", "H3_5FamilyLayer", "H3_6FamilyLayer", "H3_7FamilyLayer"];
 
   useEffect(() => {
     if (mapRef.current) return; // initialize map only once
-
     mapRef.current = new mapboxgl.Map({
       container: mapContainerRef.current,
       style: "mapbox://styles/obiwuji/cmgqlgnco001501s8aut0245o", // or satellite-streets-v12
@@ -63,15 +64,27 @@ export default function MainMap() {
       mapRef.current.keyboard.disable();
       mapRef.current.touchZoomRotate.disable();
 
-      mapRef.current.__setSelectedFeature = (feature) => setSelectedFeature(feature);
+      mapRef.current.__setSelectedFeature = (feature) => {
+        setSelectedFeature({ ...feature });
+
+        gsap.fromTo(
+          ".mapboxgl-canvas",
+          { filter: "drop-shadow(0 0 0px rgba(0,255,242,0.4))"},
+          { filter: "drop-shadow(0 0 12px rgba(0,255,242,0.6))", duration: 1.2,
+            repeat: 1,
+            yoyo: true,
+            ease: "power2.inOut",
+          }
+        )
+    };
 
 
       // Add layers here
-      //ShipWrecksPoints(mapRef.current);
+      ShipWrecksPoints(mapRef.current);
       layerIdsRef.current["BigHexLayer"] = BigHexLayer(mapRef.current, activeLayer === "BigHexLayer");
       layerIdsRef.current["H3_5FamilyLayer"] = H3_5FamilyLayer(mapRef.current, "h5_family", activeLayer === "H3_5FamilyLayer");
-      layerIdsRef.current["H3_6FamilyLayer"] = H3_5FamilyLayer(mapRef.current, "h6_family", activeLayer === "H3_6FamilyLayer");
-      layerIdsRef.current["H3_7FamilyLayer"] = H3_5FamilyLayer(mapRef.current, "h7_family", activeLayer === "H3_7FamilyLayer");
+      layerIdsRef.current["H3_6FamilyLayer"] = H3_6FamilyLayer(mapRef.current, "h6_family", activeLayer === "H3_6FamilyLayer");
+      layerIdsRef.current["H3_7FamilyLayer"] = H3_7FamilyLayer(mapRef.current, "h7_family", activeLayer === "H3_7FamilyLayer");
 
       setMap(mapRef.current);
     });
@@ -107,6 +120,10 @@ export default function MainMap() {
       });
     }
   }, [zoomedIn]);
+
+  useEffect(() => {
+      fetchHexFundingData();
+    }, []);
 
   //Zoom to destination
     const flyToSaintVincent = () => {
@@ -145,6 +162,59 @@ export default function MainMap() {
         }
     }
 
+    const gotoProfile = async (e) => {
+      e.preventDefault()
+        try {
+            navigate("/dashboard")
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    const fetchHexFundingData = async () => {
+      const tables = ["hexes_h5", "hexes_h6", "hexes_h7"];
+      const hexDataMap = {};
+      let ownershipData = [];
+
+      for (const table of tables) {
+        const {data: hexesData, error: error} = await supabase
+          .from(table)
+          .select(`*`)
+
+        if (!error && hexesData) {
+          hexesData.forEach((row) => {
+            hexDataMap[row.grid_id] = {...row, table};
+          });
+        }
+      }
+
+      // const {data: ownership, error: ownershipError} = await supabase
+      //   .from("hexes_h5")
+      //   .select(`*`)
+
+      // if (hexError) {
+      //   console.error("Error fetching hex funding data:", hexError);
+      //   return;
+      // }
+
+      // const hexDataMap = {};
+      // hexesData.forEach((row) => {
+      //   hexDataMap[row.id] = row;
+      // });
+
+      const { data: ownership, error: ownershipError } = await supabase
+        .from('hex_ownership')
+        .select("hex_id, user_id, amount_funded, percentage_owned");
+
+      if (!ownershipError && ownership) ownershipData = ownership;
+      
+      
+      setHexFundingData({
+        hexData: hexDataMap,
+        ownershipData: ownershipData || [],
+      });
+    }
+
   return (
     <div
       ref={mapContainerRef}
@@ -162,16 +232,47 @@ export default function MainMap() {
 
       <MapMenu
         ref={MapMenuRef}
+        open={menuOpen}
+        setOpen={setMenuOpen}
         activeLayer={activeLayer}
         setActiveLayer={setActiveLayer}
         layers={layers}
         goHome={flyToHP}
         handleLogout={handleSignOut}
+        gotoProfile={gotoProfile}
+      />
+      {menuOpen && (
+        <div
+          className="overlay"
+          onClick={() => setMenuOpen(false)}
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            background: "rgba(0, 0, 0, 0.3)",
+            zIndex: 998,
+            opacity: 0,
+          }}
+          ref={(el) => {
+            if (el) gsap.to(el, { opacity: 1, duration: 0.4, ease: "power2.out" });
+          }}
+        />
+      )}
+
+      <LeftMenu
+      LeftMenuRef={LeftMenuRef}
+      onMenuToggle={() => setMenuOpen(!menuOpen)}
+      zoomedIn={zoomedIn}
       />
 
       <SideMenu
-        feature={selectedFeature}
+        selectedHex={selectedFeature}
+        hexFundingData={hexFundingData}
         onClose={() => setSelectedFeature(null)}
+        refreshFundingData={fetchHexFundingData}
+        user={user}
       />
       
     </div>

@@ -41,7 +41,7 @@ export default function addMapHover(map, layerId, color = "#44DBDA" ) {
         "case",
         ["boolean", ["feature-state", "hover"], false],
         color,
-        ["get", "defaultColor"]
+        ["coalesce", ["to-color", ["get", "defaultColor"]], "#088"]
     ]);
 
 }
