@@ -10,12 +10,15 @@ import H3_6FamilyLayer from "../MapLayers/H3_6_Family";
 import H3_7FamilyLayer from "../MapLayers/H3_7_Family";
 
 import ShipWrecksPoints from "../MapLayers/ShipWrecksPoints";
+import MPA from "../MapLayers/MarineProtectedAreas";
+import InterestPoints from "../MapLayers/RandomPoints";
 
 import { UserAuth } from "../../context/AuthContext";
 
 import SideMenu from "../UI/SideMenu";
 import MapMenu from "../UI/MapMenu";
 import LeftMenu from "../UI/LeftMenu";
+import TopToggleBar from "../UI/TopToggleBar";
 import HomeUI from "../UI/HomeUI";
 
 import "mapbox-gl/dist/mapbox-gl.css";
@@ -59,11 +62,7 @@ export default function MainMap() {
 
     mapRef.current.on("load", () => {
 
-      mapRef.current.dragRotate.disable();
-      mapRef.current.dragPan.disable();
       mapRef.current.keyboard.disable();
-      mapRef.current.touchZoomRotate.disable();
-
       mapRef.current.__setSelectedFeature = (feature) => {
         setSelectedFeature({ ...feature });
 
@@ -80,13 +79,27 @@ export default function MainMap() {
 
 
       // Add layers here
-      ShipWrecksPoints(mapRef.current);
+      const wreckLayer = ShipWrecksPoints(mapRef.current);
+      const MPALayer = MPA(mapRef.current);
+      const interestLayer = InterestPoints(mapRef.current);
+
+      // Hex layers
       layerIdsRef.current["BigHexLayer"] = BigHexLayer(mapRef.current, activeLayer === "BigHexLayer");
       layerIdsRef.current["H3_5FamilyLayer"] = H3_5FamilyLayer(mapRef.current, "h5_family", activeLayer === "H3_5FamilyLayer");
       layerIdsRef.current["H3_6FamilyLayer"] = H3_6FamilyLayer(mapRef.current, "h6_family", activeLayer === "H3_6FamilyLayer");
       layerIdsRef.current["H3_7FamilyLayer"] = H3_7FamilyLayer(mapRef.current, "h7_family", activeLayer === "H3_7FamilyLayer");
+      layerIdsRef.current["Shipwrecks"] = wreckLayer;
+      layerIdsRef.current["MPA"] = MPALayer;
+      layerIdsRef.current["Interest_Points"] = interestLayer;
 
       setMap(mapRef.current);
+
+      map.on("idle", () => {
+        ["Shipwrecks-points","Marine-Protected-Areas", "Interest-points"].forEach((id) => {
+          console.log(id)
+          if (map.getLayer(id)) map.moveLayer(id);
+        });
+      });
     });
 
   }, []);
@@ -96,11 +109,25 @@ export default function MainMap() {
     if (!map) return;
 
     Object.entries(layerIdsRef.current).forEach(([name, ids]) => {
+      if(!ids) return;
+
       const visibility = name === activeLayer ? "visible" : "none";
 
       // Set visibility for both fill and outline layers
-      if (map.getLayer(ids.fillLayerId)) map.setLayoutProperty(ids.fillLayerId, "visibility", visibility);
-      if (map.getLayer(ids.outlineLayerId)) map.setLayoutProperty(ids.outlineLayerId, "visibility", visibility);
+      if(ids.fillLayerId && map.getLayer(ids.fillLayerId)) {
+        map.setLayoutProperty(ids.fillLayerId, "visibility", visibility);
+      }
+
+      if(ids.outlineLayerId && map.getLayer(ids.outlineLayerId)) {
+        map.setLayoutProperty(ids.outlineLayerId, "visibility", visibility);
+      }
+
+      if(ids.layerId && map.getLayer(ids.layerId)) {
+        map.setLayoutProperty(ids.layerId, "visibility", visibility);
+      }
+
+      // if (map.getLayer(ids.fillLayerId)) map.setLayoutProperty(ids.fillLayerId, "visibility", visibility);
+      // if (map.getLayer(ids.outlineLayerId)) map.setLayoutProperty(ids.outlineLayerId, "visibility", visibility);
     });
   }, [map, activeLayer]);
 
@@ -223,13 +250,18 @@ export default function MainMap() {
       style={{ width: "100%", height: "100vh" }}
     >
 
+      <TopToggleBar
+        zoomedIn={zoomedIn}
+        map={map}
+        layerRefs={layerIdsRef}
+      />
+
       <HomeUI
         zoomedIn={zoomedIn}
         zoomToSaintVincent={flyToSaintVincent}
         user={user}
         handleLogout={handleSignOut}
       />
-
       <MapMenu
         ref={MapMenuRef}
         open={menuOpen}

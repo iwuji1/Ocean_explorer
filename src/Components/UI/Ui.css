@@ -293,3 +293,47 @@
   color: #00fff2;
   box-shadow: 0 0 12px rgba(0, 255, 242, 0.3);
 }
+
+/* 🌊 Floating Capsule Toggle Bar */
+.TopToggleBar {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 12px;
+  z-index: 80;
+  background: rgba(0, 20, 25, 0.4);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(0, 255, 242, 0.25);
+  border-radius: 20px;
+  padding: 10px 20px;
+  box-shadow: 0 0 20px rgba(0, 255, 242, 0.15);
+}
+
+.toggle-pill {
+  font-family: "Outfit", sans-serif;
+  font-size: 0.9rem;
+  padding: 8px 16px;
+  border-radius: 25px;
+  border: 1px solid rgba(0, 255, 242, 0.4);
+  background: rgba(0, 255, 242, 0.1);
+  color: #e0fafa;
+  cursor: pointer;
+  transition: all 0.25s ease-in-out;
+  letter-spacing: 0.5px;
+}
+
+.toggle-pill:hover {
+  background: rgba(0, 255, 242, 0.2);
+  box-shadow: 0 0 12px rgba(0, 255, 255, 0.4);
+  color: #00fff2;
+}
+
+.toggle-pill.active {
+  background: rgba(0, 255, 242, 0.35);
+  border-color: rgba(0, 255, 242, 0.8);
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.6);
+  color: #001f25;
+  font-weight: 600;
+}
