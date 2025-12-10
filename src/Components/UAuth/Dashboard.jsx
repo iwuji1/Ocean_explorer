@@ -5,6 +5,7 @@ import { supabase } from "../../supabaseClient";
 
 import Avatar from './Avatar'
 import "./Auth.css"
+import UserIcon from "/user.svg"
 
 export default function Dashboard() {
     const [loading, setLoading] = useState(true)
@@ -119,27 +120,36 @@ export default function Dashboard() {
 
     return (
         <div className="dashboard-container">
-            <h1>Dashboard</h1>
-            <h2>Welcome, {fullname || user?.email}</h2>
+            {console.log(user)}
+            <div className="dashboard-header">
+            <h1>Donar Portal</h1>
+            {/* <img className="dashboard-avatar" src={user?.user_metadata.avatar_url || '/user.svg'} alt="User Avatar" /> */}
+            <img className="dashboard-avatar" src={'/user.svg'} alt="User Avatar" /> 
+            <div className="avatar-detail">
+                <p>{user?.user_metadata.full_name || user?.full_name}</p>
+                <p>{user?.email}</p>
+            </div>
+            
+            </div>
             <div className="form-container">
             <form onSubmit={updateProfile} className="form-widget">
-                <Avatar
+                {/* <Avatar
                     url={avatar_url}
                     size={150}
                     onUpload={(event, url) => {
                         updateProfile(event, url)
                     }}
                     onDelete={handleAvatarDelete}
-                />
+                /> */}
 
                 <div>
-                    <label htmlFor="email">Email</label>
+                    <label htmlFor="email">Email </label>
                     <input id="email" type="text" value={user.email} disabled />
                 </div>
 
                 <div>
-                    <label htmlFor="fullname">Display Name</label>
-                    <input id="fullname" type="text" required value={fullname || ''} onChange={(e) => setFullname(e.target.value)}/>
+                    <label htmlFor="fullname">Display Name </label>
+                    <input id="fullname" type="text" required value={user?.user_metadata.full_name || ''} onChange={(e) => setFullname(e.target.value)}/>
                 </div>
 
                 <button className="button block primary" type="submit" disabled={loading}>

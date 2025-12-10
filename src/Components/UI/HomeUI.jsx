@@ -2,6 +2,8 @@ import { useRef, useEffect } from "react";
 import { gsap } from "gsap";
 import { useNavigate } from "react-router-dom";
 
+import "./Ui.css";
+
 export default function HomeUI({zoomedIn, zoomToSaintVincent, user, handleLogout}) {
     const titleRef = useRef(null);
     const zoomButtonRef = useRef(null);

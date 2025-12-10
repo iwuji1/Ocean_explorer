@@ -5,6 +5,8 @@ import { UserAuth } from "../../context/AuthContext";
 import HomeUI from "../UI/HomeUI";
 import H3_5FamilyLayer from "../MapLayers/H3_5_Family";
 
+import "./Map.css"
+
 import { gsap } from "gsap";
 
 import "mapbox-gl/dist/mapbox-gl.css";
@@ -26,7 +28,7 @@ export default function HomeMap() {
         container: mapContainerRef.current,
         style: "mapbox://styles/obiwuji/cmgqlgnco001501s8aut0245o", // or satellite-streets-v12
         // center: [-61.2872, 13.1568], // Saint Vincent coordinates
-        zoom: 2,
+        zoom: window.innerWidth < 420 ? 0.5 : 2 // Inline check
         
       });
 

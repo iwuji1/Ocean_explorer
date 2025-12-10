@@ -1,7 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState, useRef } from "react";
+import { gsap } from "gsap";
 import "./Ui.css";
 
-export default function TopToggleBar({ map, layerRefs }) {
+export default function TopToggleBar({zoomedIn, map, layerRefs }) {
+  const TopToggleBarRef = useRef(null);
+
   const [activeLayers, setActiveLayers] = useState({
     Shipwrecks: true,
     MPA: true,
@@ -23,8 +26,29 @@ export default function TopToggleBar({ map, layerRefs }) {
     }));
   };
 
+  useEffect(() => {
+    if (TopToggleBarRef.current) {
+      if (zoomedIn) {
+        // Fade / slide in when zoomed in
+        gsap.fromTo(
+          TopToggleBarRef.current,
+          { y: "-100%", opacity: 0 },
+          { y: "0%", opacity: 1, duration: 1, ease: "power3.out" }
+        );
+      } else {
+        // Fade / slide out when zoomed out
+        gsap.to(TopToggleBarRef.current, {
+          y: "-100%",
+          opacity: 0,
+          duration: 0.8,
+          ease: "power2.in",
+        });
+      }
+    }
+  }, [zoomedIn]);
+
   return (
-    <div className="TopToggleBar">
+    <div className="TopToggleBar" ref={TopToggleBarRef}>
       <button
         className={`toggle-pill ${activeLayers.Shipwrecks ? "active" : ""}`}
         onClick={() => toggleLayer("Shipwrecks")}

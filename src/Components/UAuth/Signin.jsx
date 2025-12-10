@@ -44,40 +44,41 @@ export default function Signin() {
         }
     }
 
-    return (
-        <div className="form-container">
-            <h1>Sign In</h1>
-            <form onSubmit={handleSignIn}>
-                 <p>Don't have an account? <Link to={"/signup"}>Sign Up!</Link></p>
-                <input
-                type="email"
-                placeholder="Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                />
-                <input
-                type="password"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                />
-                <button disabled={loading} type="submit">
-                    Sign In
-                </button>
-                {error && <p>{error}</p>}
-            </form>
+    return ( <div className="form">
+            <div className="form-container">
+                <h1>Sign In</h1>
+                <form className="signInForm" onSubmit={handleSignIn}>
+                    <p>Don't have an account? <Link to={"/signup"}>Sign Up!</Link></p>
+                    <input
+                    type="email"
+                    placeholder="Email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    />
+                    <input
+                    type="password"
+                    placeholder="Password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    />
+                    <button className="signInbtn" disabled={loading} type="submit">
+                        Sign In
+                    </button>
+                    {error && <p>{error}</p>}
+                </form>
 
-            <div style={{ marginTop: '1rem'}}>
-                <button onClick={handleGoogleSignIn} className="google-button">
-                <img
-                    src="https://developers.google.com/identity/images/g-logo.png"
-                    alt="Google"
-                    style={{ width: 18, marginRight: 8, verticalAlign: 'middle' }}
-                />
-                Sign in with Google
-                </button>
+                <div style={{ marginTop: '1rem'}}>
+                    <button onClick={handleGoogleSignIn} className="google-button">
+                    <img
+                        src="https://developers.google.com/identity/images/g-logo.png"
+                        alt="Google"
+                        style={{ width: 18, marginRight: 8, verticalAlign: 'middle' }}
+                    />
+                    Sign in with Google
+                    </button>
+                </div>
             </div>
         </div>
     )

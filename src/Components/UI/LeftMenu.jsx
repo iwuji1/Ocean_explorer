@@ -1,13 +1,17 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import HamburgerIcon from "../../assets/menu_24px.svg";
 import HomeLogo from "/Subtract_white.svg";
 import "./Ui.css";
 
-export default function LeftMenu({ LeftMenuRef ,zoomedIn, onMenuToggle }) {
+export default function LeftMenu({ LeftMenuRef ,zoomedIn, isLeftMenuOpen, goHome, handleLogout, gotoProfile}) {
 
   useEffect(() => {
     if (LeftMenuRef.current) {
+
+      const isMobile = window.innerWidth <= 768; // tweak breakpoint if needed
+      if (isMobile) return; // let CSS handle mobile, no GSAP
+
       if (zoomedIn) {
         // Fade / slide in when zoomed in
         gsap.fromTo(
@@ -25,27 +29,38 @@ export default function LeftMenu({ LeftMenuRef ,zoomedIn, onMenuToggle }) {
         });
       }
     }
-  }, [zoomedIn]);
+  }, [zoomedIn, LeftMenuRef]);
 
   return (
-    <div className="LeftMenuDocked" ref={LeftMenuRef}>
+    <div className={`LeftMenuDocked ${isLeftMenuOpen ? "is-open" : ""}`} ref={LeftMenuRef}>
+      <div className="menu-content">
       <img
         className="LeftMenu_logo"
         src={HomeLogo}
         alt="HexExplorer Logo"
         title="Go Home"
+        onClick={goHome}
       />
+      <button className="LogoutButton" onClick={handleLogout}>
+        Logout
+      </button>
 
-      <div
+      <button className="ProfileButton" onClick={gotoProfile}>
+          Profile
+      </button>
+      </div>
+      {/* <button
+        type="button"
         className="LeftMenu_button"
         onClick={onMenuToggle}
+        aria-label={isLeftMenuOpen ? "Close menu" : "Open menu"}
       >
         <img
           src={HamburgerIcon}
           alt="Open Menu"
           className="LeftMenu_hamburger"
         />
-      </div>
+      </button> */}
 
       <div className="LeftMenu_content">
         <h3>Navigation</h3>

@@ -45,10 +45,10 @@ export default function Signup() {
         }
       }
 
-    return (
+    return ( <div className="form">
         <div className="form-container">
             <h1>SignUp</h1>
-            <form onSubmit={handleSignUp}>
+            <form className="signUpForm" onSubmit={handleSignUp}>
                  <p>Already have an account? <Link to={"/signin"}>Sign In!</Link></p>
                  <input
                  type="full_name"
@@ -71,7 +71,7 @@ export default function Signup() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 />
-                <button disabled={loading} type="submit">
+                <button className="signUpbtn" disabled={loading} type="submit">
                     Sign Up
                 </button>
                 {error && <p>{error}</p>}
@@ -88,5 +88,6 @@ export default function Signup() {
                 </button>
             </div>
         </div>
+    </div>
     )
 }

@@ -15,11 +15,15 @@ import InterestPoints from "../MapLayers/RandomPoints";
 
 import { UserAuth } from "../../context/AuthContext";
 
-import SideMenu from "../UI/SideMenu";
+import SideMenu from "../UI/SideMenu_v2";
 import MapMenu from "../UI/MapMenu";
 import LeftMenu from "../UI/LeftMenu";
 import TopToggleBar from "../UI/TopToggleBar";
 import HomeUI from "../UI/HomeUI";
+
+import HamburgerIcon from "../../assets/menu_24px.svg";
+
+import "./Map.css"
 
 import "mapbox-gl/dist/mapbox-gl.css";
 
@@ -34,6 +38,7 @@ export default function MainMap() {
   const [selectedFeature, setSelectedFeature] = useState(null);
   const [hexFundingData, setHexFundingData] = useState({ hexData: {}, ownershipData: [] });
   const [menuOpen, setMenuOpen] = useState(false);
+  const [leftMenuOpen, setLeftMenuOpen] = useState(false);
   
   const MapMenuRef = useRef(null);
   const LeftMenuRef = useRef(null);
@@ -54,9 +59,9 @@ export default function MainMap() {
       container: mapContainerRef.current,
       style: "mapbox://styles/obiwuji/cmgqlgnco001501s8aut0245o", // or satellite-streets-v12
       // center: [-61.2872, 13.1568], // Saint Vincent coordinates
-      zoom: 2,
+      zoom: window.innerWidth < 420 ? 0.5 : 2,
       maxZoom: 15,
-      minZoom: 2
+      minZoom: 0.5
       
     });
 
@@ -157,7 +162,7 @@ export default function MainMap() {
       if (!mapRef.current) return;
       mapRef.current.flyTo({
         center: [-61.2872, 13.1568],
-        zoom: 10,
+        zoom: window.innerWidth < 420 ? 6 : 10,
         speed: 0.8,
         curve: 1.5,
         essential: true, // this animation is considered essential with respect to prefers-reduced-motion
@@ -293,11 +298,48 @@ export default function MainMap() {
         />
       )}
 
-      <LeftMenu
-      LeftMenuRef={LeftMenuRef}
-      onMenuToggle={() => setMenuOpen(!menuOpen)}
-      zoomedIn={zoomedIn}
-      />
+      {/* Dark overlay when menu is open (mobile) */}
+      {leftMenuOpen && (
+        <div
+          className="overlay"
+          onClick={() => setLeftMenuOpen(false)}
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            background: "rgba(0, 0, 0, 0.3)",
+            zIndex: 998,
+            opacity: 0,
+          }}
+          ref={(el) => {
+            if (el) gsap.to(el, { opacity: 1, duration: 0.4, ease: "power2.out" });
+          }}
+        />
+      )}
+
+      {zoomedIn && (
+        <button
+          type="button"
+          className="MobileMenuToggle"
+          onClick={() => setLeftMenuOpen(prev => !prev)}
+          aria-label={leftMenuOpen ? "Close menu" : "Open menu"}
+        >
+          <img src={HamburgerIcon} alt="" />
+        </button>
+      )}
+
+      {zoomedIn && (
+        <LeftMenu
+          LeftMenuRef={LeftMenuRef}
+          zoomedIn={zoomedIn}
+          isLeftMenuOpen={leftMenuOpen}
+          goHome={flyToHP}
+          handleLogout={handleSignOut}
+          gotoProfile={gotoProfile}
+        />
+      )}
 
       <SideMenu
         selectedHex={selectedFeature}
