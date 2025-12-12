@@ -17,58 +17,56 @@ export default function Dashboard() {
 
     const {session, signOut} = UserAuth();
     const navigate = useNavigate();
-
     const user = session?.user || null;
 
+    const headerAvatarSrc = 
+        avatar_url && (avatar_url.startsWith('http://') || avatar_url.startsWith('https://'))
+        ? avatar_url
+        : UserIcon;
+
     useEffect(() => {
-        if (!user) {
+        if (!user) return;
+
+        setFullname(user?.user_metadata.full_name || '');
+        setAvatarUrl(user?.user_metadata.avatar_url || null);
+
+        (async () =>
+        {
             getProfile();
             fetchOwnedHexes();
             getFundingSummary();
-    }
+    })();
     }, [user]);
 
     async function getProfile() {
-        setLoading(true)
-        const {data, error} = await supabase
-        .from('profiles')
-        .select(`full_name, avatar_url`)
-        .eq('id', user.id)
-        .single();
+        if (!user) return;
+        setLoading(true);
 
-        if (error) console.warn(error);
-        else if (data) {
-            setFullname(data.full_name)
-            setAvatarUrl(data.avatar_url)
+        const {data, error} = await supabase
+            .from('profiles')
+            .select(`full_name, avatar_url`)
+            .eq('id', user.id)
+            .single();
+
+        if (error) {
+            console.warn(error);
+        } else if (data) {
+            setFullname(data.full_name ?? '')
+            setAvatarUrl(data.avatar_url ?? '')
         }
         
         setLoading(false);
     }
 
-    async function fetchOwnedHexes() {
-        const { data, error } = await supabase
-            .from('hex_ownership')
-            .select(`hex_id, amount_funded, percentage_owned, hexes_h5(grid_id, price)`)
-            .eq('user_id', user.id);
-
-        if (error) {
-            console.error("Error fetching owned hexes:", error);
-            return;
-        }
-
-        setOwnedHexes(data || []);
-        const total = data.reduce((sum, record) => sum + record.amount_funded, 0);
-        setTotalFunded(total);
-    }
-
-    async function updateProfile(event, avatarUrl) {
+    async function updateProfile(event, newAvatarUrl = avatar_url) {
         event?.preventDefault();
+        if (!user) return;
         setLoading(true);
 
         const updates = {
             id: user.id,
             full_name: fullname,
-            avatar_url: newAvatarUrl || avatarUrl,
+            avatar_url: newAvatarUrl,
             updated_at: new Date(),
         };
 
@@ -77,10 +75,30 @@ export default function Dashboard() {
         if (error) {
             alert(error.message);
         } else {
-            setAvatarUrl(avatarUrl);
+            setAvatarUrl(newAvatarUrl);
         }
 
         setLoading(false);
+    }
+
+    async function fetchOwnedHexes() {
+        if (!user) return;
+
+        const { data, error } = await supabase
+            .from('hex_ownership')
+            .select(`hex_id, amount_funded, percentage_owned, hexes(grid_id, price)`)
+            .eq('user_id', user.id);
+
+        if (error) {
+            console.error("Error fetching owned hexes:", error);
+            return;
+        }
+
+        const rows = data || [];
+
+        setOwnedHexes(rows);
+        const total = rows.reduce((sum, record) => sum + Number(record.amount_funded || 0), 0);
+        setTotalFunded(total);
     }
 
     async function getFundingSummary() {
@@ -100,10 +118,17 @@ export default function Dashboard() {
     }
 
     async function handleAvatarDelete() {
-        await supabase
+        if (!user) return;
+
+        const {error} = await supabase
         .from('profiles')
         .update({ avatar_url: null })
         .eq('id', user.id);
+
+        if (error) {
+            console.error("Error deleting avatar URL from profile:", error);
+            return;
+        }
 
         setAvatarUrl(null);
     }
@@ -121,64 +146,102 @@ export default function Dashboard() {
     return (
         <div className="dashboard-container">
             {console.log(user)}
+            <div className="dashboard-inner">
             <div className="dashboard-header">
-            <h1>Donar Portal</h1>
-            {/* <img className="dashboard-avatar" src={user?.user_metadata.avatar_url || '/user.svg'} alt="User Avatar" /> */}
-            <img className="dashboard-avatar" src={'/user.svg'} alt="User Avatar" /> 
-            <div className="avatar-detail">
-                <p>{user?.user_metadata.full_name || user?.full_name}</p>
-                <p>{user?.email}</p>
+                <img className="dashboard-avatar" src={headerAvatarSrc} alt="User Avatar" />
+                <div>
+                <h1>Donor Portal</h1>
+                <div className="avatar-detail">
+                    <p>{fullname || user?.user_metadata.full_name}</p>
+                    <p>{user?.email}</p>
+                </div>
+                </div>
             </div>
-            
-            </div>
-            <div className="form-container">
-            <form onSubmit={updateProfile} className="form-widget">
-                {/* <Avatar
+
+            <div className="dashboard-main">
+                {/* LEFT: Profile form */}
+                <div className="form-container">
+                <form onSubmit={updateProfile} className="form-widget">
+                    <Avatar
                     url={avatar_url}
                     size={150}
+                    defaultUrl={UserIcon}
                     onUpload={(event, url) => {
-                        updateProfile(event, url)
+                        updateProfile(event, url);
                     }}
                     onDelete={handleAvatarDelete}
-                /> */}
+                    />
 
-                <div>
+                    <div>
                     <label htmlFor="email">Email </label>
                     <input id="email" type="text" value={user.email} disabled />
-                </div>
+                    </div>
 
-                <div>
+                    <div>
                     <label htmlFor="fullname">Display Name </label>
-                    <input id="fullname" type="text" required value={user?.user_metadata.full_name || ''} onChange={(e) => setFullname(e.target.value)}/>
+                    <input
+                        id="fullname"
+                        type="text"
+                        required
+                        value={fullname || ""}
+                        onChange={(e) => setFullname(e.target.value)}
+                    />
+                    </div>
+
+                    <button className="button block primary" type="submit" disabled={loading}>
+                    {loading ? "Loading ..." : "Update Profile"}
+                    </button>
+                </form>
+                <hr />
                 </div>
 
-                <button className="button block primary" type="submit" disabled={loading}>
-                    {loading ? 'Loading ...' : 'Update Profile'}
-                </button>
-            </form>
-            <hr />
-            </div>
-            <div className="funding-summary">
+                {/* RIGHT: Funding summary + hex grid */}
+                <div className="funding-summary">
                 <h3>Funding Summary</h3>
                 <button onClick={() => navigate("/mainmap")}>Enter Your Map</button>
-                <p><strong>Total Funded:</strong> ${totalFunded.toLocaleString()}</p>
+                <p>
+                    <strong>Total Funded:</strong> ${totalFunded.toLocaleString()}
+                </p>
 
                 {ownedHexes.length > 0 ? (
-                <ul>
-                    {ownedHexes.map((hex, idx) => (
-                    <li key={idx}>
-                        Hex: {hex.hexes_5?.grid_id || hex.hex_id} — Funded: $
-                        {hex.amount_funded.toLocaleString()} ({hex.percentage_owned}%)
-                    </li>
-                    ))}
-                </ul>
+                    <ul className="owned-hex-list">
+                    {ownedHexes.map((hex, idx) => {
+                        const gridId = hex.hexes?.grid_id || hex.hex_id;
+                        const price = hex.hexes?.price ?? null;
+
+                        return (
+                        <li key={idx} className="owned-hex-item">
+                            <p>
+                            <strong>Hex:</strong> {gridId}
+                            </p>
+                            {price != null && (
+                            <p>
+                                <strong>Hex Price:</strong> $
+                                {Number(price).toLocaleString()}
+                            </p>
+                            )}
+                            <p>
+                            <strong>Your Contribution:</strong> $
+                            {Number(hex.amount_funded).toLocaleString()}
+                            </p>
+                            <p>
+                            <strong>Your Ownership:</strong>{" "}
+                            {Number(hex.percentage_owned).toFixed(2)}%
+                            </p>
+                        </li>
+                        );
+                    })}
+                    </ul>
                 ) : (
-                <p>You haven’t funded any hexes yet.</p>
+                    <p>You haven’t funded any hexes yet.</p>
                 )}
+                </div>
             </div>
-            <button onClick={handleSignOut} className="button danger">
+
+            <button onClick={handleSignOut} className="button danger signOutbtn">
                 SignOut
             </button>
+            </div>
         </div>
     )
 }

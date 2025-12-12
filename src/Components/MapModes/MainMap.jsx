@@ -15,7 +15,7 @@ import InterestPoints from "../MapLayers/RandomPoints";
 
 import { UserAuth } from "../../context/AuthContext";
 
-import SideMenu from "../UI/SideMenu_v2";
+import SideMenu from "../UI/SideMenu";
 import MapMenu from "../UI/MapMenu";
 import LeftMenu from "../UI/LeftMenu";
 import TopToggleBar from "../UI/TopToggleBar";
@@ -34,7 +34,7 @@ export default function MainMap() {
   const user = session?.user || null;
 
   const [map, setMap] = useState(null);
-  const [activeLayer, setActiveLayer] = useState("BigHexLayer");
+  const [activeLayer, setActiveLayer] = useState("H3_6FamilyLayer");
   const [selectedFeature, setSelectedFeature] = useState(null);
   const [hexFundingData, setHexFundingData] = useState({ hexData: {}, ownershipData: [] });
   const [menuOpen, setMenuOpen] = useState(false);

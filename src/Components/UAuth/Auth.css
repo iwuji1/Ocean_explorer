@@ -8,10 +8,23 @@
     gap: 10px;
 }
 
+label {
+    font-family: "Outfit", sans-serif;
+    font-size: 1rem;
+    color: #e0fafa;
+}
+
+/* Funding summary area */
+.funding-summary {
+  width: 100%;
+  color: #e0fafa;
+  font-family: "Outfit", sans-serif;
+}
+
 .funding-summary h3 {
-    color: #A0ABC0;
-    text-transform: uppercase;
-    margin-bottom: 10px;
+  color: #A0ABC0;
+  text-transform: uppercase;
+  margin-bottom: 10px;
 }
 
 h2 {
@@ -26,14 +39,15 @@ h2 {
   justify-content: center;
 }
 
+/* Profile form */
 .form-container {
-    display: flex;
-    flex-direction: column;
-    width: 20vw;
-    justify-content: center;
-    align-items: center;
-    gap: 10px;
-
+  display: flex;
+  flex-direction: column;
+  width: 100%;               /* take full column width */
+  max-width: 320px;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 10px;
 }
 
 input[type=email], input[type=password], input[type=fullname] {
@@ -118,57 +132,124 @@ form p {
 }
 
 .dashboard-container {
+  min-height: 100vh;
+  width: 100%;
+  box-sizing: border-box;
+  background-color: #1A202C;
+  padding: 2rem 5vw 4rem 5vw;
+
   display: flex;
   flex-direction: column;
-  width: 100vw;
-  justify-content: center;
-  align-items: center;
-  gap: 10px;
-  background-color: #1A202C;
-  padding-bottom: 10%
+  align-items: stretch; /* let children fill width */
+  gap: 2rem;
 }
 
+/* Optional: constrain content to a max width for nicer reading */
+.dashboard-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+
+/* Header: full width, but content centered */
 .dashboard-header {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  justify-content: center;
+  gap: 1.5rem;
+  justify-content: flex-start;
+  margin-bottom: 1rem;
 }
+
+
+/* Name + email */
 .avatar-detail {
   display: flex;
   flex-direction: column;
-  align-items: center;
   justify-content: center;
   font-family: "Outfit", sans-serif;
 }
 
 .avatar-detail p {
-  font-family: "Outfit", sans-serif;
   margin: 0;
+  color: #e0fafa;
 }
 
+/* Avatar in header */
 .dashboard-avatar {
-  width: 20vw;
-  height: auto;
-  fill: #00ffd9;
+  width: 80px;
+  height: 80px;
+  border-radius: 9999px;
+  border: 2px solid rgba(0, 255, 242, 0.6);
+  object-fit: cover;
+  filter: drop-shadow(0 0 6px rgba(0, 255, 242, 0.5));
 }
 
+/* Form + summary layout: form on left, hex cards on right on desktop */
+.dashboard-main {
+  display: grid;
+  grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
+  gap: 2rem;
+  align-items: flex-start;
+}
+
+/* Hex cards container: grid on desktop */
+.owned-hex-list {
+  list-style: none;
+  padding: 0;
+  margin: 16px 0 0 0;
+
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+/* Individual hex card */
+.owned-hex-item {
+  background: rgba(0, 255, 242, 0.05);
+  border: 1px solid rgba(0, 255, 242, 0.2);
+  border-radius: 10px;
+  padding: 12px 14px;
+  box-shadow: 0 0 10px rgba(0, 255, 242, 0.1);
+  font-size: 0.9rem;
+}
+
+.owned-hex-item p {
+  margin: 2px 0;
+}
+
+
+/* Mobile tweaks */
 @media only screen and (max-width: 768px) {
-    .form-container {
-        width: 80%;
-        align-content: center;
-    }
+  .dashboard-container {
+    padding: 1.5rem 1rem 3rem 1rem;
+  }
 
-    .dashboard-header {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-    }
+  .dashboard-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
 
-    img.dashboard-avatar {
-      width: 90vw;
-    }
+  .dashboard-avatar {
+    width: 120px;
+    height: 120px;
+  }
 
+  .dashboard-main {
+    grid-template-columns: 1fr; /* stack form above summary */
+  }
 
+  .form-container {
+    max-width: 100%;
+  }
+
+  .owned-hex-list {
+    display: block; /* vertical list on mobile */
+  }
+
+  .owned-hex-item {
+    margin-bottom: 10px;
+  }
 }

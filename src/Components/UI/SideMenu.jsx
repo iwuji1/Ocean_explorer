@@ -4,19 +4,15 @@ import { gsap } from "gsap";
 import { supabase } from "../../supabaseClient";
 import "./Ui.css";
 
+import FunderAvatarStack from "./AvatarStack";
+
 export default function SideMenu({selectedHex, hexFundingData, onClose, refreshFundingData, user }) {
     const [fundingAmount, setFundingAmount] = useState("");
+    const [fundingPercent, setFundingPercent] = useState(0);
     const [loading, setLoading] = useState(false);
     const [statusMessage, setStatusMessage] = useState("");
+    const [funderProfiles, setFunderProfiles] = useState([]);
     const menuRef = useRef(null);
-
-    const layerToTableMap = {
-        h5_family: "hexes_h5",
-        h6_family: "hexes_h6",
-        h7_family: "hexes_h7",
-    };
-
-    const tableName = layerToTableMap[selectedHex?.layerLevel] || "nope";
 
     useEffect(() => {
         const menu= menuRef.current;
@@ -48,30 +44,96 @@ export default function SideMenu({selectedHex, hexFundingData, onClose, refreshF
 
     useEffect(() => {
         console.log("🧩 Selected Hex:", selectedHex);
-        console.log("🧭 TableName:", tableName);
         console.log("📦 hexFundingData count:", Object.keys(hexFundingData.hexData).length);
         console.log("🔎 Matching record:", Object.values(hexFundingData.hexData).find(h => h.grid_id === selectedHex?.GRID_ID));
     }, [selectedHex]);
 
+
     const hexRecord = useMemo(() => {
         if (!hexFundingData?.hexData || !selectedHex?.GRID_ID) return null;
-        console.log("Searching for hex record...", selectedHex?.GRID_ID, tableName);
         console.log("check..", hexFundingData.hexData);
 
         return Object.values(hexFundingData.hexData).find(
             (hex) => hex.grid_id?.toLowerCase() === selectedHex?.GRID_ID?.toLowerCase()
         );
-    }, [selectedHex, hexFundingData, tableName]);
+    }, [selectedHex, hexFundingData]);
+
 
     const ownershipData = useMemo(() => {
         if (!hexRecord || !hexFundingData?.ownershipData) return [];
         return hexFundingData.ownershipData.filter(
-            (ownership) => ownership.hex_id === hexRecord.id
+            (ownership) => ownership.hex_id === hexRecord.grid_id
         );
     }, [hexRecord, hexFundingData]);
 
     const totalFunded = ownershipData.reduce((sum, record) => sum + record.amount_funded, 0);
+
+    const fundingLimits = useMemo(() => {
+        if (!hexRecord) return { maxAmount: 0, maxPercent: 0, previousUserAmount: 0 };
+
+        const price = Number(hexRecord.price || 0);
+        const previousUserAmount = ownershipData.find(o => o.user_id === user?.id)?.amount_funded || 0;
+
+        const totalFundedAll = totalFunded; // from your reduce
+        const totalFundedWithoutUser = totalFundedAll - previousUserAmount;
+
+        const maxAmount = Math.max(0, price - totalFundedWithoutUser);
+        const maxPercent = price > 0 ? Math.round((maxAmount / price) * 100) : 0;
+
+        return {
+            maxAmount,
+            maxPercent,
+            previousUserAmount,
+        };
+    }, [hexRecord, ownershipData, totalFunded, user]);
+
+    useEffect(() => {
+        // Clamp current slider if the max dropped
+        if (fundingPercent > fundingLimits.maxPercent) {
+            setFundingPercent(fundingLimits.maxPercent);
+            const clampedAmount = ((fundingLimits.maxPercent / 100) * hexRecord.price).toFixed(0);
+            setFundingAmount(clampedAmount);
+        }
+    }, [fundingLimits.maxPercent]);
+
     const percentageFunded = hexRecord ? ((totalFunded / hexRecord.funding_goal) * 100).toFixed(2) : 0;
+    const isFullyFunded = hexRecord && totalFunded >= hexRecord.price;
+
+    useEffect(() => {
+        const fetchFunderProfiles = async () => {
+            if (!ownershipData.length) {
+            setFunderProfiles([]);
+            return;
+            }
+
+            // unique user ids for this hex
+            const userIds = Array.from(
+            new Set(ownershipData.map((o) => o.user_id).filter(Boolean))
+            );
+
+            if (!userIds.length) {
+            setFunderProfiles([]);
+            return;
+            }
+
+            const { data, error } = await supabase
+            .from("profiles")
+            .select("id, full_name, avatar_url")
+            .in("id", userIds);
+
+            if (error) {
+            console.error("Error fetching funder profiles:", error);
+            setFunderProfiles([]);
+            return;
+            }
+
+            setFunderProfiles(data || []);
+        };
+
+        fetchFunderProfiles();
+    }, [ownershipData]);
+
+
 
     async function handleFundHex() {
         if (!user) {
@@ -82,39 +144,125 @@ export default function SideMenu({selectedHex, hexFundingData, onClose, refreshF
             alert("Please enter a valid funding amount.");
             return;
         }
+
+        if (!hexRecord) {
+            console.error("No hexRecord found for selected hex");
+            return;
+        }
+
+
         setLoading(true);
         setStatusMessage("");
 
         try {
-            const existing = ownershipData.find(own => own.user_id === user.id);
-            const amount = parseFloat(fundingAmount);
-            const percentage = ((amount / hexRecord.price) * 100).toFixed(2);
-            
-            if (existing) {
 
-                const newAmount = existing.amount_funded + amount;
-                const newPercentage = ((newAmount / hexRecord.price) * 100).toFixed(2);
-
-                await supabase
-                    .from('hex_ownership')
-                    .update({ amount_funded: newAmount, percentage_owned: newPercentage })
-                    .eq('hex_id', hexRecord.id)
-                    .eq('user_id', user.id);
-            } else {
-                await supabase
-                    .from('hex_ownership')
-                    .insert([{ hex_id: hexRecord.id, user_id: user.id, amount_funded: amount, percentage_owned: percentage }]);
+            const price = Number(hexRecord.price || 0);
+            if (!price || price <= 0) {
+                setStatusMessage("This hex cannot be funded at this time.");
+                setLoading(false);
+                return;
             }
 
-            const newTotal = (hexRecord.totalFunded || 0) + amount;
-            await supabase
-                .from(tableName)
-                .update({ totalFunded: newTotal })
-                .eq('id', hexRecord.id);
 
-            setStatusMessage("Funding successful!");
-            setFundingAmount("");
+            const existing = ownershipData.find(own => own.user_id === user.id);
+            const previousUserAmount = existing ? existing.amount_funded : 0;
+            const totalFundedAll = totalFunded;
+            const totalFundedWithoutUser = totalFundedAll - previousUserAmount;
+
+            const desiredAmount = Number(fundingAmount);
+
+            const newUserAmount = Math.min(desiredAmount, fundingLimits.maxAmount);
+            if (fundingLimits.maxAmount <= 0) {
+                setStatusMessage("This hex is already fully funded.");
+                return;
+            }
+            const rawPercentage = (newUserAmount / price) * 100;
+            const percentage = Number(rawPercentage.toFixed(2));
+
+            if (newUserAmount !== desiredAmount) {
+                setFundingAmount(newUserAmount.toFixed(0));
+                setFundingPercent(
+                    Math.round((newUserAmount / price) * 100)
+                );
+            }
+
+            if (newUserAmount === previousUserAmount) {
+                setStatusMessage("No change in funding amount.");
+                return;
+            }
+
+            const hexKey = hexRecord.grid_id;
+            const delta = newUserAmount - previousUserAmount;
+
+            console.log("hexKey:", hexKey, typeof hexKey, "userId:", user.id, typeof user.id);
+            console.log({
+                previousUserAmount,
+                newUserAmount,
+                totalFundedAll,
+                totalFundedWithoutUser,
+                delta,
+            });
+
+            let ownershipError;
+            if (existing) {
+                // Update existing record
+                const { error } = await supabase
+                    .from('hex_ownership')
+                    .update({ 
+                        amount_funded: newUserAmount,
+                        percentage_owned: percentage
+                    })
+                    .eq('hex_id', hexKey)
+                    .eq('user_id', user.id);
+                ownershipError = error;
+            } else {
+                // Insert new record
+                 const { error } = await supabase
+                    .from('hex_ownership')
+                    .insert({ 
+                        hex_id: hexKey,
+                        user_id: user.id,
+                        amount_funded: newUserAmount,
+                        percentage_owned: percentage
+                    });
+                ownershipError = error;
+            }
+
+            if (ownershipError) {
+                console.error("Supabase hex_ownership error:", ownershipError);
+                setStatusMessage(ownershipError.message || "Error funding hex. Please try again.");
+                return;
+            }
+
+            const currentTotal = Number(hexRecord.total_funded || 0);
+            let newTotal = currentTotal + delta;
+
+            if (newTotal > price) {
+                newTotal = price;
+            }
+
+            const {data: updated, error: hexesError } = await supabase
+                .from("hexes")
+                .update({ total_funded: newTotal })
+                .eq("grid_id", hexKey)
+                .select("grid_id, total_funded");
+
+            console.log("hexes update result:", { updated, hexesError });
+
+            if (hexesError) {
+                console.error("Error updating hex total_funded:", hexesError);
+                setStatusMessage(hexesError.message || "Error updating hex funding. Please try again.");
+                setLoading(false);
+                return;
+            }
+
+            setStatusMessage(
+                newTotal >= price ? "Hex Fully Funded" : "Funding successful!"
+            );
+   
             await refreshFundingData();
+            setFundingAmount(String(newUserAmount.toFixed(0)));
+            setFundingPercent(Math.round((newUserAmount / price) * 100));
 
             // 💠 GSAP pulse effect
             gsap.fromTo(
@@ -164,24 +312,23 @@ export default function SideMenu({selectedHex, hexFundingData, onClose, refreshF
             <hr />
             <div className="fundingCard">
                 <p><strong>Price:</strong> ${hexRecord.price?.toLocaleString()}</p>
-                <p><strong>Total Funded:</strong> ${totalFunded.toLocaleString()} ({percentageFunded}%)</p>
-                <p><strong>Funding Progress:</strong> {percentageFunded}%</p>
+                <p><strong>Total Funded:</strong> ${fundingAmount.toLocaleString()} ({fundingPercent}%)</p>
+                <p><strong>Funding Progress:</strong> {fundingPercent}%</p>
 
             {/* Progress Bar */}
 
             <div className="progress-bar-container">
-                <div className="progress-fill" style={{ width: `${percentageFunded}%` }}/>
+                <div className="progress-fill" style={{ width: `${fundingPercent}%` }}/>
             </div>
             </div>
             <h4>Current Funders</h4>
-            {ownershipData.length > 0 ? (
-                <ul className="funderList">
-                    {ownershipData.map((owner, idx) => (
-                        <li key={idx}>
-                            User: {owner.user_id} - Funded: ${owner.amount_funded.toLocaleString()} ({owner.percentage_owned}%)
-                        </li>
-                    ))}
-                </ul>
+            {funderProfiles.length > 0 ? (
+                <div>
+                <FunderAvatarStack profiles={funderProfiles} maxShown={5} />
+                <p className="funder-count">
+                    {funderProfiles.length} funder{funderProfiles.length > 1 ? "s" : ""} so far
+                </p>
+                </div>
             ) : (
                 <p>No funders yet. Be the first to fund this hex!</p>
             )}
@@ -189,13 +336,33 @@ export default function SideMenu({selectedHex, hexFundingData, onClose, refreshF
             <div className="fundHex">
             <h4>Fund this Hex</h4>
             <input
-                type="number"
-                placeholder="Enter amount to fund"
-                value={fundingAmount}
-                onChange={(e) => setFundingAmount(e.target.value)}
+                type="range"
+                min="0"
+                max={fundingLimits.maxPercent}
+                step="5"
+                value={fundingPercent}
+                disabled={isFullyFunded}
+                onChange={(e) => {
+                    const percent = Number(e.target.value);
+                    setFundingPercent(percent);
+                    const calculatedAmount = ((percent / 100) * hexRecord.price);
+                    const clamped = Math.min(calculatedAmount, fundingLimits.maxAmount);
+                    setFundingAmount(clamped.toFixed(0));
+                }}
             />
-            <button onClick={handleFundHex} disabled={loading}>
-                {loading ? "Processing..." : "Fund Hex"}
+            {isFullyFunded ? (
+                <p className="slider-label" style={{ color: "#00fff2" }}>
+                    This hex is fully funded.
+                </p>
+            ) : (
+            <p className="slider-label">
+                Funding: <strong>${Number(fundingAmount || 0).toLocaleString()}</strong>
+                &nbsp;({fundingPercent}%)
+            </p>
+            )}
+
+            <button onClick={handleFundHex} disabled={loading || isFullyFunded}>
+                {isFullyFunded ? "Hex Fully Funded" : loading ? "Processing..." : "Fund Hex"}
             </button>
             {statusMessage && <p>{statusMessage}</p>}
             </div>

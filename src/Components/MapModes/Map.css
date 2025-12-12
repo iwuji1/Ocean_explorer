@@ -21,7 +21,7 @@
     position: fixed;
     top: 0;
     left: 0;
-    width: 100%;
+    width: 100vw;
     height: 100vh;
     padding: 2rem 1.5rem;
     display: flex;
@@ -39,7 +39,7 @@
   /* Let the content fill the panel nicely */
   .LeftMenu_content {
     margin-top: 2rem;
-    width: 100%;
+    width: 90%;
     text-align: left;
   }
 

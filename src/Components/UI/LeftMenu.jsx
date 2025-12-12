@@ -1,10 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
+import { useNavigate } from "react-router-dom";
 import HamburgerIcon from "../../assets/menu_24px.svg";
 import HomeLogo from "/Subtract_white.svg";
 import "./Ui.css";
 
 export default function LeftMenu({ LeftMenuRef ,zoomedIn, isLeftMenuOpen, goHome, handleLogout, gotoProfile}) {
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (LeftMenuRef.current) {
@@ -65,9 +68,9 @@ export default function LeftMenu({ LeftMenuRef ,zoomedIn, isLeftMenuOpen, goHome
       <div className="LeftMenu_content">
         <h3>Navigation</h3>
         <ul>
-          <li><button>🌍 Explore</button></li>
-          <li><button>🧭 Hexpedition</button></li>
-          <li><button>💰 Purchase</button></li>
+          <li><button onClick={() => navigate("/mainmap")}>🌍 Explore</button></li>
+          <li><button onClick={() => navigate("/expeditionmap")}>🧭 Hexpedition</button></li>
+          <li><button onClick={() => navigate("/moneymap")}>💰 Purchase</button></li>
         </ul>
       </div>
     </div>

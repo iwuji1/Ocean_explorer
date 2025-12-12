@@ -6,6 +6,8 @@ import Dashboard from "./Components/UAuth/Dashboard";
 import PrivateRoute from "./Components/UAuth/PrivateRoute";
 import HomeMap from "./Components/MapModes/HomeMap";
 import MainMap from "./Components/MapModes/MainMap";
+import ExpeditionMap from "./Components/MapModes/ExpeditionMap";
+import MoneyMap from "./Components/MapModes/MoneyMap";
 
 export const router = createBrowserRouter([
     {path: "/", element: <HomeMap />},
@@ -23,5 +25,19 @@ export const router = createBrowserRouter([
         <PrivateRoute>
          <MainMap />
         </PrivateRoute>
-        )},
+        )
+    },
+    {path: "*", element: <div>404 Not Found</div>},
+    {path: "/expeditionmap", element: (
+        <PrivateRoute>
+         <ExpeditionMap />
+        </PrivateRoute>
+        )
+    },
+    {path: "/moneymap", element: (
+        <PrivateRoute>
+         <MoneyMap />
+        </PrivateRoute>
+        )
+    },
 ]);

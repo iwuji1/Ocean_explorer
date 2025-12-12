@@ -2,6 +2,23 @@ import { useEffect, useState, useRef } from "react";
 import { gsap } from "gsap";
 import "./Ui.css";
 
+function ToggleButton({ label, icon, active, onClick }) {
+  return (
+    <button
+      className={`toggle-pill ${active ? "active" : ""}`}
+      role="switch"
+      aria-checked={active}
+      onClick={onClick}
+    >
+      <span className="toggle-label">
+        {icon && <span className="toggle-icon">{icon}</span>}
+        {label}
+      </span>
+      <span className={`toggle-knob ${active ? "on" : ""}`} />
+    </button>
+  );
+}
+
 export default function TopToggleBar({zoomedIn, map, layerRefs }) {
   const TopToggleBarRef = useRef(null);
 
@@ -49,25 +66,26 @@ export default function TopToggleBar({zoomedIn, map, layerRefs }) {
 
   return (
     <div className="TopToggleBar" ref={TopToggleBarRef}>
-      <button
-        className={`toggle-pill ${activeLayers.Shipwrecks ? "active" : ""}`}
+      <ToggleButton
+        label="Shipwrecks"
+        icon="🚢"
+        active={activeLayers.Shipwrecks}
         onClick={() => toggleLayer("Shipwrecks")}
-      >
-        🚢 Shipwrecks
-      </button>
+      />
 
-      <button
-        className={`toggle-pill ${activeLayers.MPA ? "active" : ""}`}
+      <ToggleButton
+        label="Protected Areas"
+        icon="🐠"
+        active={activeLayers.MPA}
         onClick={() => toggleLayer("MPA")}
-      >
-        🐠 Protected Areas
-      </button>
+      />
 
-      <button
-        className={`toggle-pill ${activeLayers.Interest_Points ? "active" : ""}`}
-        onClick={() => toggleLayer("Interest_Points")}>
-          Points of Interest
-      </button>
+      <ToggleButton
+        label="Points of Interest"
+        icon="📍"
+        active={activeLayers.Interest_Points}
+        onClick={() => toggleLayer("Interest_Points")}
+      />
 
       {/* Example placeholders for more toggles later */}
       {/* 
