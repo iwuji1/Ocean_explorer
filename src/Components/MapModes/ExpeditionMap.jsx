@@ -1,37 +1,30 @@
 import { useEffect, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import { gsap } from "gsap";
-import { supabase } from "../../supabaseClient";
+
+import GPS_ships from "../MapLayers/Gps_Points";
+
 import { useNavigate } from "react-router-dom";
-
-import BigHexLayer from "../MapLayers/BigHexLayer";
-import H3_5FamilyLayer from "../MapLayers/H3_5_Family";
-import H3_6FamilyLayer from "../MapLayers/H3_6_Family";
-import H3_7FamilyLayer from "../MapLayers/H3_7_Family";
-
-import ShipWrecksPoints from "../MapLayers/ShipWrecksPoints";
-import MPA from "../MapLayers/MarineProtectedAreas";
-import InterestPoints from "../MapLayers/RandomPoints";
-
 import { UserAuth } from "../../context/AuthContext";
 
-import SideMenu from "../UI/SideMenu_v2";
-import MapMenu from "../UI/MapMenu";
 import LeftMenu from "../UI/LeftMenu";
-import TopToggleBar from "../UI/TopToggleBar";
-import HomeUI from "../UI/HomeUI";
+
+import HamburgerIcon from "../../assets/menu_24px.svg";
 
 import "mapbox-gl/dist/mapbox-gl.css";
 
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
 
 export default function ExpeditionMap() {
-    const { session } = UserAuth();
+    const { session, signOut } = UserAuth();
     const navigate = useNavigate();
+    const user = session?.user || null;
 
     const exploreContainerRef = useRef(null);
     const mapRef = useRef(null);
     const [map, setMap] = useState(null);
+    const [leftMenuOpen, setLeftMenuOpen] = useState(true);
+    const LeftMenuRef = useRef(null);
 
     useEffect(() => {
         if (mapRef.current) return; // initialize map only once
@@ -39,34 +32,74 @@ export default function ExpeditionMap() {
         mapRef.current = new mapboxgl.Map({
             container: exploreContainerRef.current,
             style: "mapbox://styles/obiwuji/cmgqlgnco001501s8aut0245o",
-            center: [-30, 20],
-            zoom: window.innerWidth < 420 ? 1.5 : 2
+            center: [-61.2872, 13.1568],
+            zoom: window.innerWidth < 420 ? 6 : 10
         });
 
         mapRef.current.on("load", () => {
-            mapRef.current.scrollZoom.disable();
-            mapRef.current.doubleClickZoom.disable();
-            mapRef.current.boxZoom.disable();
-            mapRef.current.dragRotate.disable();
-            mapRef.current.keyboard.disable();
-            mapRef.current.touchZoomRotate.disable();
+            const m = mapRef.current;
+            if (!m) return;
+
+            const shipDots = GPS_ships(m)
 
             setMap(mapRef.current);
         });
     }, []);
 
-    return (
-        <div>
-            <HomeUI handleLoginClick={() => {
-                if (session) navigate("/dashboard");
-                else navigate("/signin");
-            }}/>
+        const handleSignOut = async (e) => {
+      e.preventDefault()
+        try {
+            await signOut()
+            navigate("/")
+        } catch (err) {
+            console.error(err);
+        }
+    }
 
-            <div ref={exploreContainerRef}
+    const gotoProfile = async (e) => {
+      e.preventDefault()
+        try {
+            navigate("/dashboard")
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+
+    return (
+        <div
+            ref={exploreContainerRef}
             id="explore-container"
             className="explore-container"
-            style={{ width: "100vw", height: "100vh" }}>
-            </div>
+            style={{ width: "100%", height: "100vh" }}
+        >
+            {/* UI overlay sits ABOVE the map canvas */}
+            {leftMenuOpen && (
+                <div
+                className="overlay"
+                onClick={() => setLeftMenuOpen(false)}
+                ref={(el) => {
+                    if (el) gsap.to(el, { opacity: 1, duration: 0.4, ease: "power2.out" });
+                }}
+                />
+            )}
+
+            <button
+                type="button"
+                className="MobileMenuToggle"
+                onClick={() => setLeftMenuOpen((prev) => !prev)}
+                aria-label={leftMenuOpen ? "Close menu" : "Open menu"}
+            >
+                <img src={HamburgerIcon} alt="" />
+            </button>
+
+            <LeftMenu
+                LeftMenuRef={LeftMenuRef}
+                zoomedIn={true}
+                isLeftMenuOpen={leftMenuOpen}
+                handleLogout={handleSignOut}
+                gotoProfile={gotoProfile}
+            />
         </div>
-    );
+        );
 }

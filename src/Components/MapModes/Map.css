@@ -1,84 +1,97 @@
-#map-container {
-  height: 100%;
+.explore-container {
+  position: relative;
   width: 100%;
-  /* temporarily set the background color so we can tell where the map container is positioned */
-  background-color: lightgrey;
+  height: 100vh;
 }
 
-/* On desktop, you might not need the hamburger at all */
-.LeftMenu_button {
+.map-container {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.map-ui {
+  position: absolute;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none; /* allow map drag/zoom */
+}
+
+.map-ui * {
+  pointer-events: auto;
+}
+
+/* overlay starts hidden; GSAP will show/hide */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.35);
+  z-index: 9998;
+  opacity: 0;
   display: none;
 }
 
-.LeftMenu_content {
-  flex: 1;
+/* the menu panel must be above overlay */
+.LeftMenuDocked {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  z-index: 10000;
+
+  /* GSAP will animate this */
+  transform: translateX(-110%);
 }
 
-/* ---------- MOBILE ---------- */
+/* hamburger: only on mobile */
+.MobileMenuToggle {
+  display: none;
+}
+
+div.mapboxgl-popup-content {
+  background-color: #003737;
+  border: 2px solid rgba(0, 255, 242, 0.8);
+  box-shadow: 0 0 6px rgba(0, 255, 242, 0.5);
+  font-family: "Outfit", sans-serif;
+  
+}
+
+strong {
+  color: aqua;
+}
+
 
 @media (max-width: 768px) {
-  .LeftMenuDocked {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    padding: 2rem 1.5rem;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    transform: translateX(-100%);
-    transition: transform 0.3s ease;
-    z-index: 999; /* above overlay (998) */
-  }
-
-  .LeftMenuDocked.is-open {
-    transform: translateX(0);
-  }
-
-  /* Let the content fill the panel nicely */
-  .LeftMenu_content {
-    margin-top: 2rem;
-    width: 90%;
-    text-align: left;
-  }
-
-  .LeftMenu_content ul {
-    width: 100%;
-  }
-
-  .LeftMenu_content li button {
-    width: 100%;
-  }
-
-  /* 🔔 Mobile hamburger button (outside menu) */
   .MobileMenuToggle {
+    display: flex;
     position: fixed;
     top: 16px;
     left: 16px;
     width: 44px;
     height: 44px;
     border-radius: 999px;
-    border: 1px solid rgba(0, 255, 242, 0.7);
-    background: rgba(0, 20, 25, 0.85);
-    display: flex;
+    z-index: 10001;
     align-items: center;
     justify-content: center;
-    z-index: 1000;
-    cursor: pointer;
+    border: 1px solid rgba(0, 255, 242, 0.7);
+    background: rgba(0, 20, 25, 0.85);
     padding: 0;
   }
 
   .MobileMenuToggle img {
     width: 22px;
     height: 22px;
-    filter: drop-shadow(0 0 6px rgba(0, 255, 242, 0.6));
+  }
+
+  /* optional: full screen menu width on mobile */
+  .LeftMenuDocked {
+    width: 100vw;
   }
 }
 
-/* Hide the mobile hamburger on desktop */
 @media (min-width: 769px) {
-  .MobileMenuToggle {
-    display: none;
+  /* optional: fixed dock width on desktop */
+  .LeftMenuDocked {
+    width: 10vw;
   }
 }

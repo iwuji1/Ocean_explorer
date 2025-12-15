@@ -19,10 +19,18 @@ export default function Dashboard() {
     const navigate = useNavigate();
     const user = session?.user || null;
 
-    const headerAvatarSrc = 
-        avatar_url && (avatar_url.startsWith('http://') || avatar_url.startsWith('https://'))
-        ? avatar_url
-        : UserIcon;
+     const headerAvatarSrc = (() => {
+        if (!avatar_url) return UserIcon;
+
+        if (avatar_url.startsWith("http://") || avatar_url.startsWith("https://")) {
+            return avatar_url;
+        }
+
+        // treat as supabase storage path
+        const { data } = supabase.storage.from("avatars").getPublicUrl(avatar_url);
+        return data?.publicUrl || UserIcon;
+    })();
+
 
     useEffect(() => {
         if (!user) return;
@@ -34,7 +42,6 @@ export default function Dashboard() {
         {
             getProfile();
             fetchOwnedHexes();
-            getFundingSummary();
     })();
     }, [user]);
 
@@ -101,21 +108,21 @@ export default function Dashboard() {
         setTotalFunded(total);
     }
 
-    async function getFundingSummary() {
-        const { data, error } = await supabase
-            .from('v_user_funding_summary')
-            .select('*')
-            .eq('user_id', user.id)
-            .single();
+    // async function getFundingSummary() {
+    //     const { data, error } = await supabase
+    //         .from('v_hex_funding_summary')
+    //         .select('*')
+    //         .eq('user_id', user.id)
+    //         .single();
             
-        if (error) {
-            console.error("Error fetching funding summary:", error);
-            return;
-        }
+    //     if (error) {
+    //         console.error("Error fetching funding summary:", error);
+    //         return;
+    //     }
 
-        setFundingSummary(data || {});
-        console.log("Funding Summary:", data);
-    }
+    //     setFundingSummary(data || {});
+    //     console.log("Funding Summary:", data);
+    // }
 
     async function handleAvatarDelete() {
         if (!user) return;
@@ -145,7 +152,6 @@ export default function Dashboard() {
 
     return (
         <div className="dashboard-container">
-            {console.log(user)}
             <div className="dashboard-inner">
             <div className="dashboard-header">
                 <img className="dashboard-avatar" src={headerAvatarSrc} alt="User Avatar" />

@@ -27,7 +27,7 @@ export default function RPoints(map) {
             source: sourceId,
             layout: {
                 "icon-image": "q-mark",
-                "icon-size": ["interpolate", ["linear"], ["zoom"], 0, 0.1, 10, 0.6],
+                "icon-size": ["interpolate", ["linear"], ["zoom"], 0, 0.05, 2, 0.2],
                 "icon-allow-overlap": true,
             },
             paint: {
@@ -44,6 +44,10 @@ export default function RPoints(map) {
     map.on('mouseenter', layerId, (e) => {
         map.getCanvas().style.cursor = 'pointer';
         const feature = e.features[0];
+
+        const esc = (s) => String(s ?? "").replace(/[&<>"']/g, m => ({
+            "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+        }[m]));
 
         popup
         .setLngLat(e.lngLat)

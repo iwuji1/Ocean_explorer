@@ -9,6 +9,7 @@ export default function H3_6FamilyLayer(map, idPrefix = "h6_family", visible = t
     map.addSource(sourceid, {
         type: "geojson",
         data: "/Data/H3_6_depth_wrecks_family.json",
+        promoteId: "GRID_ID",
     });
 
     map.addLayer({
@@ -17,9 +18,14 @@ export default function H3_6FamilyLayer(map, idPrefix = "h6_family", visible = t
         source: sourceid,
         layout: { visibility: visible ? "visible" : "none" },
         paint: {
-        "fill-color": "#088",
-        "fill-opacity": 0.5,
-        },
+            "fill-color": [
+                "case",
+                ["boolean", ["feature-state", "hover"], false],
+                "#44DBDA",
+                "#073642" // base fallback until we inject match expression
+            ],
+            "fill-opacity": 0.7,
+            },
     });
 
     map.addLayer({
@@ -34,9 +40,19 @@ export default function H3_6FamilyLayer(map, idPrefix = "h6_family", visible = t
     });
 
     // Hover effect
-    addMapHover(map, fillLayerId, "#44DBDA");
+    addMapHover(map, fillLayerId);
 
     map.on("click", fillLayerId, (e) => {
+
+        const f = e.features?.[0];
+        if (!f) return;
+
+        console.log("CLICKED layer:", fillLayerId);
+        console.log("feature.id:", f.id);
+        console.log("GRID_ID:", f.properties?.GRID_ID);
+        console.log("source:", map.getLayer(fillLayerId)?.source);
+        console.log("sourceLayer:", map.getLayer(fillLayerId)?.["source-layer"]);
+        
         if (e.features.length > 0) {
         const featureProps = e.features[0].properties;
         const layerData = {...featureProps, layerLevel: idPrefix}

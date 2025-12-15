@@ -1,5 +1,44 @@
 import mapboxgl from "mapbox-gl";
 
+function getPopupLngLat(feature) {
+  const geom = feature?.geometry;
+  if (!geom) return null;
+
+  // If it's a Point, easy
+  if (geom.type === "Point") return geom.coordinates;
+
+  // Helper: centroid of a linear ring (array of [lng,lat])
+  const ringCentroid = (ring) => {
+    if (!Array.isArray(ring) || ring.length === 0) return null;
+    let x = 0, y = 0;
+    for (const p of ring) {
+      x += Number(p[0]);
+      y += Number(p[1]);
+    }
+    return [x / ring.length, y / ring.length];
+  };
+
+  // Polygon: coordinates = [ outerRing, hole1, hole2... ]
+  if (geom.type === "Polygon") {
+    return ringCentroid(geom.coordinates?.[0]);
+  }
+
+  // MultiPolygon: coordinates = [ polygon1, polygon2, ... ]
+  // polygon1 = [ outerRing, holes... ]
+  if (geom.type === "MultiPolygon") {
+    return ringCentroid(geom.coordinates?.[0]?.[0]);
+  }
+
+  // Fallback: try to unwrap until we hit [lng,lat]
+  let coords = geom.coordinates;
+  while (Array.isArray(coords?.[0]) && typeof coords?.[0]?.[0] !== "number") {
+    coords = coords[0];
+  }
+  if (Array.isArray(coords) && typeof coords[0] === "number") return coords;
+
+  return null;
+}
+
 export default function MPA(map) {
     const sourceId = "marine_protected_areas";
     const layerId = "Marine-Protected-Areas";
@@ -29,24 +68,34 @@ export default function MPA(map) {
     // Create a popup, but don't add to map yet
     const popup = new mapboxgl.Popup({
         closeButton: false,
-        closeOnClick: false
+        closeOnClick: false,
+        className: "MPA-points"
     });
 
     map.on('mouseenter', layerId, (e) => {
         map.getCanvas().style.cursor = 'pointer';
+
         const feature = e.features[0];
-        const name = feature.properties.Name || 'Unknown';
-        const nationality = feature.properties.Nationality || 'Unknown';
-        const cause_lost = feature.properties["Cause Lost"] || 'Unknown';
+        console.log(feature)
+        const name = feature.properties["NAME"] || 'Unknown';
+        const status= feature.properties["STATUS"] || 'Unknown';
+        const status_yr = feature.properties["STATUS_YR"] || 'Unknown';
         
+        const esc = (s) => String(s ?? "").replace(/[&<>"']/g, m => ({
+            "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+        }[m]));
+
+        const lngLat = getPopupLngLat(feature);
+        if (!lngLat) return;
+
         popup
-        .setLngLat(feature.geometry.coordinates)
-        .setHTML(`<strong>${name}</strong><br/>Nationality: ${nationality}<br/>Cause Lost: ${cause_lost}`)
+        .setLngLat(lngLat)
+        .setHTML(`<strong>${esc(name)}</strong><br/>Status: ${esc(status)}<br/>Status Year: ${status_yr}`)
         .addTo(map);
     });
 
     // Remove popup on leave
-    map.on('mouseleave', 'MPAs', () => {
+    map.on('mouseleave', layerId, () => {
         map.getCanvas().style.cursor = "";
         popup.remove();
     });

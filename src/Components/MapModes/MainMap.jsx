@@ -39,6 +39,8 @@ export default function MainMap() {
   const [hexFundingData, setHexFundingData] = useState({ hexData: {}, ownershipData: [] });
   const [menuOpen, setMenuOpen] = useState(false);
   const [leftMenuOpen, setLeftMenuOpen] = useState(false);
+  const [mapReady, setMapReady] = useState(false);
+
   
   const MapMenuRef = useRef(null);
   const LeftMenuRef = useRef(null);
@@ -67,6 +69,9 @@ export default function MainMap() {
 
     mapRef.current.on("load", () => {
 
+      const m = mapRef.current;
+      if (!m) return;
+
       mapRef.current.keyboard.disable();
       mapRef.current.__setSelectedFeature = (feature) => {
         setSelectedFeature({ ...feature });
@@ -84,27 +89,28 @@ export default function MainMap() {
 
 
       // Add layers here
-      const wreckLayer = ShipWrecksPoints(mapRef.current);
-      const MPALayer = MPA(mapRef.current);
-      const interestLayer = InterestPoints(mapRef.current);
+      const wreckLayer = ShipWrecksPoints(m);
+      const MPALayer = MPA(m);
+      const interestLayer = InterestPoints(m);
 
       // Hex layers
-      layerIdsRef.current["BigHexLayer"] = BigHexLayer(mapRef.current, activeLayer === "BigHexLayer");
-      layerIdsRef.current["H3_5FamilyLayer"] = H3_5FamilyLayer(mapRef.current, "h5_family", activeLayer === "H3_5FamilyLayer");
-      layerIdsRef.current["H3_6FamilyLayer"] = H3_6FamilyLayer(mapRef.current, "h6_family", activeLayer === "H3_6FamilyLayer");
-      layerIdsRef.current["H3_7FamilyLayer"] = H3_7FamilyLayer(mapRef.current, "h7_family", activeLayer === "H3_7FamilyLayer");
+      layerIdsRef.current["BigHexLayer"] = BigHexLayer(m, activeLayer === "BigHexLayer");
+      layerIdsRef.current["H3_5FamilyLayer"] = H3_5FamilyLayer(m, "h5_family", activeLayer === "H3_5FamilyLayer");
+      layerIdsRef.current["H3_6FamilyLayer"] = H3_6FamilyLayer(m, "h6_family", activeLayer === "H3_6FamilyLayer");
+      layerIdsRef.current["H3_7FamilyLayer"] = H3_7FamilyLayer(m, "h7_family", activeLayer === "H3_7FamilyLayer");
       layerIdsRef.current["Shipwrecks"] = wreckLayer;
       layerIdsRef.current["MPA"] = MPALayer;
       layerIdsRef.current["Interest_Points"] = interestLayer;
 
-      setMap(mapRef.current);
+      setMap(m);
 
-      map.on("idle", () => {
+      m.on("idle", () => {
         ["Shipwrecks-points","Marine-Protected-Areas", "Interest-points"].forEach((id) => {
-          console.log(id)
-          if (map.getLayer(id)) map.moveLayer(id);
+          if (m.getLayer(id)) m.moveLayer(id);
         });
       });
+
+      setMapReady(true);
     });
 
   }, []);
@@ -153,10 +159,6 @@ export default function MainMap() {
     }
   }, [zoomedIn]);
 
-  useEffect(() => {
-      fetchHexFundingData();
-    }, []);
-
   //Zoom to destination
     const flyToSaintVincent = () => {
       if (!mapRef.current) return;
@@ -203,49 +205,245 @@ export default function MainMap() {
         }
     }
 
+    // const fetchHexFundingData = async () => {
+
+
+
+    //   const { data: hexRows, error: hexError } = await supabase
+    //       .from("hexes")
+    //       .select("grid_id, price, total_funded");
+      
+    //       console.log("hexes select:", { hexError, count: hexRows?.length });
+
+    //     if (hexError) {
+    //       console.error("Error fetching hexes:", hexError);
+    //       return;
+    //     }
+
+    //   const hexDataMap = {};
+    //   (hexRows || []).forEach((row) => {
+    //     const key = normGridId(row.grid_id);
+    //     if (!key) return;
+
+    //     const price = Number(row.price || 0);
+    //     const totalFundedRaw = Number(row.total_funded || 0);
+    //     const totalFunded = Math.max(0, totalFundedRaw);
+    //     const pct = price > 0 ? (totalFunded / price) * 100 : 0;
+
+    //     hexDataMap[key] = { ...row, funding_pct: pct };
+    //   });
+
+    //   let ownershipData = [];
+
+    //   const { data: ownership, error: ownershipError } = await supabase
+    //     .from('hex_ownership')
+    //     .select("hex_id, user_id, amount_funded, percentage_owned");
+      
+    //   console.log("ownership select:", { ownershipError, count: ownership?.length });
+
+    //   if (ownershipError) console.error("Error fetching ownership:", ownershipError);
+
+    //   ownershipData = ownership || [];
+      
+      
+    //   setHexFundingData({
+    //     hexData: hexDataMap,
+    //     ownershipData: ownershipData || [],
+    //   });
+
+    //   console.log("has clicked hex?",
+    //     !!hexDataMap["865e71b07ffffff"]
+    //   );
+
+    //   const m = mapRef.current;
+    //   if (m) {
+    //     m.once("idle", () => {
+    //       applyFundingFeatureState(m, hexDataMap, layerIdsRef.current);
+    //     });
+    //   }
+    // };
+
     const fetchHexFundingData = async () => {
-      const tables = ["hexes_h5", "hexes_h6", "hexes_h7"];
-      const hexDataMap = {};
-      let ownershipData = [];
+      try {
+        // -----------------------------
+        // 1) FETCH ALL HEXES (PAGINATED)
+        // -----------------------------
+        const pageSize = 1000;
+        let from = 0;
+        let allHexRows = [];
 
-      for (const table of tables) {
-        const {data: hexesData, error: error} = await supabase
-          .from(table)
-          .select(`*`)
+        while (true) {
+          const { data, error } = await supabase
+            .from("hexes")
+            .select("grid_id, price, total_funded")
+            .range(from, from + pageSize - 1);
 
-        if (!error && hexesData) {
-          hexesData.forEach((row) => {
-            hexDataMap[row.grid_id] = {...row, table};
+          console.log("hexes page:", { from, to: from + pageSize - 1, count: data?.length, error });
+
+          if (error) {
+            console.error("Error fetching hexes:", error);
+            return;
+          }
+
+          allHexRows = allHexRows.concat(data || []);
+
+          // last page (returned fewer than pageSize)
+          if (!data || data.length < pageSize) break;
+
+          from += pageSize;
+        }
+
+        console.log("hexes total rows fetched:", allHexRows.length);
+
+        // -----------------------------
+        // 2) BUILD hexDataMap (NORMALISED KEY)
+        // -----------------------------
+        const hexDataMap = {};
+        (allHexRows || []).forEach((row) => {
+          const key = String(row.grid_id ?? "").trim().toLowerCase();
+          if (!key) return;
+
+          const price = Number(row.price || 0);
+
+          // clamp to avoid weird negatives showing up
+          const totalFunded = Math.max(0, Number(row.total_funded || 0));
+
+          const pct = price > 0 ? (totalFunded / price) * 100 : 0;
+
+          hexDataMap[key] = { ...row, funding_pct: pct };
+        });
+
+        // -----------------------------
+        // 3) FETCH OWNERSHIP (UNCHANGED)
+        // -----------------------------
+        const { data: ownership, error: ownershipError } = await supabase
+          .from("hex_ownership")
+          .select("hex_id, user_id, amount_funded, percentage_owned");
+
+        console.log("ownership select:", { ownershipError, count: ownership?.length });
+
+        if (ownershipError) {
+          console.error("Error fetching ownership:", ownershipError);
+        }
+
+        const ownershipData = ownership || [];
+
+        // -----------------------------
+        // 4) SET STATE
+        // -----------------------------
+        setHexFundingData({
+          hexData: hexDataMap,
+          ownershipData,
+        });
+
+        // -----------------------------
+        // 5) APPLY FEATURE STATE AFTER MAP IDLE
+        // -----------------------------
+        const m = mapRef.current;
+        if (m) {
+          m.once("idle", () => {
+            applyFundingFeatureState(m, hexDataMap, layerIdsRef.current);
           });
         }
+      } catch (err) {
+        console.error("fetchHexFundingData failed:", err);
       }
+    };
 
-      // const {data: ownership, error: ownershipError} = await supabase
-      //   .from("hexes_h5")
-      //   .select(`*`)
+    function getColorForFundingPct(pct) {
+      const p = Math.max(0, pct);
+      if (p >= 100) return "#00FF9C";  // fully funded – bright green
+      if (p >= 75) return "#5CFFDA";   // 75–99%
+      if (p >= 50) return "#00A7FF";   // 50–74%
+      if (p >= 25) return "#005CFF";   // 25–49%
+      if (p > 0)   return "#222C5C";   // 1–24% (barely glowing)
+      return "#073642";                  // 0% (not funded)
+    }
 
-      // if (hexError) {
-      //   console.error("Error fetching hex funding data:", hexError);
-      //   return;
-      // }
+    function applyFundingColours(map, hexDataMap, layerIds) {
+      if (!map) return;
 
-      // const hexDataMap = {};
-      // hexesData.forEach((row) => {
-      //   hexDataMap[row.id] = row;
-      // });
+      // Build MATCH expression safely
+      const matchExpr = ["match", ["get", "GRID_ID"]];
 
-      const { data: ownership, error: ownershipError } = await supabase
-        .from('hex_ownership')
-        .select("hex_id, user_id, amount_funded, percentage_owned");
+      Object.entries(hexDataMap).forEach(([gridId, row]) => {
+        if (!gridId) return; // skip null/undefined grid_id
+        const pct = Number(row?.funding_pct ?? 0);
+        const color = getColorForFundingPct(pct);
+        matchExpr.push(String(gridId), color);
+      });
 
-      if (!ownershipError && ownership) ownershipData = ownership;
-      
-      
-      setHexFundingData({
-        hexData: hexDataMap,
-        ownershipData: ownershipData || [],
+      matchExpr.push("#073642"); // default
+
+      const fillExprWithHover = [
+        "case",
+        ["boolean", ["feature-state", "hover"], false],
+        "#44DBDA",
+        matchExpr
+      ];
+
+      ["H3_5FamilyLayer", "H3_6FamilyLayer", "H3_7FamilyLayer"].forEach((key) => {
+        const ids = layerIds[key];
+        if (!ids?.fillLayerId) return;
+        if (!map.getLayer(ids.fillLayerId)) return;
+
+        map.setPaintProperty(ids.fillLayerId, "fill-color", fillExprWithHover);
+        map.setPaintProperty(ids.fillLayerId, "fill-opacity", 0.7);
       });
     }
+
+
+    useEffect(() => {
+      if (!map || !Object.keys(hexFundingData.hexData).length) return;
+
+      applyFundingColours(map, hexFundingData.hexData, layerIdsRef.current);
+    }, [map, hexFundingData]);
+
+    function applyFundingFeatureState(map, hexDataMap, layerIds) {
+      const familyKeys = ["H3_5FamilyLayer", "H3_6FamilyLayer", "H3_7FamilyLayer"];
+
+      familyKeys.forEach((key) => {
+        const ids = layerIds[key];
+        if (!ids?.sourceid) return;
+        if (!map.getSource(ids.sourceid)) return;
+
+        // for each hex in DB, set feature-state on the matching GRID_ID in this source
+        Object.entries(hexDataMap).forEach(([gridId, row]) => {
+          const pct = Number(row.funding_pct || 0);
+          map.setFeatureState(
+            { source: ids.sourceid, id: gridId }, // id comes from promoteId
+            { fundingColor: getColorForFundingPct(pct) }
+          );
+        });
+      });
+    }
+
+    function normGridId(v) {
+      return String(v ?? "")
+        .normalize("NFKC")
+        .replace(/\u00A0/g, " ")   // NBSP -> space
+        .replace(/[\u200B-\u200D\uFEFF]/g, "") // zero-width chars
+        .trim()
+        .toLowerCase();
+    }
+
+    useEffect(() => {
+      if (!mapReady) return;
+      fetchHexFundingData();
+    }, [mapReady]);
+
+    useEffect(() => {
+      const m = mapRef.current;
+      if (!mapReady || !m) return;
+
+      const hexDataMap = hexFundingData?.hexData || {};
+      if (!Object.keys(hexDataMap).length) return;
+
+      m.once("idle", () => {
+        applyFundingFeatureState(m, hexDataMap, layerIdsRef.current);
+      });
+    }, [mapReady, hexFundingData]);
+
 
   return (
     <div

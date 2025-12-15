@@ -28,7 +28,7 @@ export default function ShipWrecksPoints(map) {
             source: sourceId,
             layout: {
                 "icon-image": "cross-15",
-                "icon-size": ["interpolate", ["linear"], ["zoom"], 0, 0.1, 10, 0.6],
+                "icon-size": ["interpolate", ["linear"], ["zoom"], 0, 0.05, 2, 0.2],
                 "icon-allow-overlap": true,
             },
             paint: {
@@ -44,7 +44,8 @@ export default function ShipWrecksPoints(map) {
     // Create a popup, but don't add to map yet
     const popup = new mapboxgl.Popup({
         closeButton: false,
-        closeOnClick: false
+        closeOnClick: false,
+        className: "shipwreck-popup"
     });
 
     function animateRadarFadeIn(map, layerId) {
@@ -90,10 +91,14 @@ export default function ShipWrecksPoints(map) {
         const feature = e.features[0];
         const name = feature.properties.Name || 'Unknown';
         const year = feature.properties["Year found"] || 'Unknown';
+
+        const esc = (s) => String(s ?? "").replace(/[&<>"']/g, m => ({
+            "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+        }[m]));
     
         popup
         .setLngLat(feature.geometry.coordinates)
-        .setHTML(`<strong>${name}</strong><br/>Year Found: ${year}`)
+        .setHTML(`<strong>${esc(name)}</strong><br/>Year Found: ${esc(year)}`)
         .addTo(map);
     });
     

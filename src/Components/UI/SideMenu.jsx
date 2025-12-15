@@ -7,7 +7,7 @@ import "./Ui.css";
 import FunderAvatarStack from "./AvatarStack";
 
 export default function SideMenu({selectedHex, hexFundingData, onClose, refreshFundingData, user }) {
-    const [fundingAmount, setFundingAmount] = useState("");
+    const [fundingAmount, setFundingAmount] = useState(0);
     const [fundingPercent, setFundingPercent] = useState(0);
     const [loading, setLoading] = useState(false);
     const [statusMessage, setStatusMessage] = useState("");
@@ -48,15 +48,15 @@ export default function SideMenu({selectedHex, hexFundingData, onClose, refreshF
         console.log("🔎 Matching record:", Object.values(hexFundingData.hexData).find(h => h.grid_id === selectedHex?.GRID_ID));
     }, [selectedHex]);
 
+    const selectedKey = useMemo(() => normGridId(selectedHex?.GRID_ID), [selectedHex]);
+
 
     const hexRecord = useMemo(() => {
-        if (!hexFundingData?.hexData || !selectedHex?.GRID_ID) return null;
+        if (!selectedKey) return null;
         console.log("check..", hexFundingData.hexData);
 
-        return Object.values(hexFundingData.hexData).find(
-            (hex) => hex.grid_id?.toLowerCase() === selectedHex?.GRID_ID?.toLowerCase()
-        );
-    }, [selectedHex, hexFundingData]);
+        return hexFundingData?.hexData?.[selectedKey] ?? null;
+    }, [selectedKey, hexFundingData?.hexData]);
 
 
     const ownershipData = useMemo(() => {
@@ -88,16 +88,22 @@ export default function SideMenu({selectedHex, hexFundingData, onClose, refreshF
     }, [hexRecord, ownershipData, totalFunded, user]);
 
     useEffect(() => {
+        if (!hexRecord) return;
         // Clamp current slider if the max dropped
         if (fundingPercent > fundingLimits.maxPercent) {
-            setFundingPercent(fundingLimits.maxPercent);
-            const clampedAmount = ((fundingLimits.maxPercent / 100) * hexRecord.price).toFixed(0);
-            setFundingAmount(clampedAmount);
+            const nextPercent = fundingLimits.maxPercent;
+
+            setFundingPercent(nextPercent);
+            const clampedAmount = ((nextPercent / 100) * Number(hexRecord.price || 0));
+            setFundingAmount(String(Math.round(clampedAmount)));
         }
-    }, [fundingLimits.maxPercent]);
+    }, [fundingLimits.maxPercent, fundingPercent, hexRecord]);
 
     const percentageFunded = hexRecord ? ((totalFunded / hexRecord.funding_goal) * 100).toFixed(2) : 0;
-    const isFullyFunded = hexRecord && totalFunded >= hexRecord.price;
+    const safePrice = Number(hexRecord?.price || 0);
+    const isFullyFunded = !!hexRecord && totalFunded >= safePrice;
+
+
 
     useEffect(() => {
         const fetchFunderProfiles = async () => {
@@ -132,6 +138,35 @@ export default function SideMenu({selectedHex, hexFundingData, onClose, refreshF
 
         fetchFunderProfiles();
     }, [ownershipData]);
+
+    useEffect(() => {
+        if (!selectedHex) return;
+
+        const raw = String(selectedHex.GRID_ID);
+        const norm = normGridId(raw);
+
+        console.log("GRID raw:", raw, "len:", raw.length);
+        console.log("GRID norm:", norm, "len:", norm.length);
+        console.log("codes(raw):", [...raw].map(c => c.charCodeAt(0)));
+        console.log("existsInMap(norm):", !!hexFundingData?.hexData?.[norm]);
+    }, [selectedHex, hexFundingData]);
+
+    useEffect(() => {
+        const run = async () => {
+            const id = selectedHex?.GRID_ID;
+            if (!id) return;
+
+            const { data, error } = await supabase
+            .from("hexes")
+            .select("grid_id, price, total_funded")
+            .eq("grid_id", id)
+            .maybeSingle();
+
+            console.log("DB lookup for clicked GRID_ID:", id, { data, error });
+        };
+        run();
+    }, [selectedHex]);
+
 
 
 
@@ -237,9 +272,7 @@ export default function SideMenu({selectedHex, hexFundingData, onClose, refreshF
             const currentTotal = Number(hexRecord.total_funded || 0);
             let newTotal = currentTotal + delta;
 
-            if (newTotal > price) {
-                newTotal = price;
-            }
+            newTotal = Math.max(0, Math.min(newTotal, price));
 
             const {data: updated, error: hexesError } = await supabase
                 .from("hexes")
@@ -287,6 +320,15 @@ export default function SideMenu({selectedHex, hexFundingData, onClose, refreshF
         }
     }
 
+    function normGridId(v) {
+      return String(v ?? "")
+        .normalize("NFKC")
+        .replace(/\u00A0/g, " ")   // NBSP -> space
+        .replace(/[\u200B-\u200D\uFEFF]/g, "") // zero-width chars
+        .trim()
+        .toLowerCase();
+    }
+
     if (!selectedHex) return null;
     if (!hexRecord) 
         return (
@@ -312,7 +354,7 @@ export default function SideMenu({selectedHex, hexFundingData, onClose, refreshF
             <hr />
             <div className="fundingCard">
                 <p><strong>Price:</strong> ${hexRecord.price?.toLocaleString()}</p>
-                <p><strong>Total Funded:</strong> ${fundingAmount.toLocaleString()} ({fundingPercent}%)</p>
+                <p><strong>Total Funded:</strong> ${Number(totalFunded || 0).toLocaleString()} ({percentageFunded}%)</p>
                 <p><strong>Funding Progress:</strong> {fundingPercent}%</p>
 
             {/* Progress Bar */}
@@ -345,9 +387,9 @@ export default function SideMenu({selectedHex, hexFundingData, onClose, refreshF
                 onChange={(e) => {
                     const percent = Number(e.target.value);
                     setFundingPercent(percent);
-                    const calculatedAmount = ((percent / 100) * hexRecord.price);
+                    const calculatedAmount = (percent / 100) * safePrice;
                     const clamped = Math.min(calculatedAmount, fundingLimits.maxAmount);
-                    setFundingAmount(clamped.toFixed(0));
+                    setFundingAmount(Math.round(clamped));
                 }}
             />
             {isFullyFunded ? (
