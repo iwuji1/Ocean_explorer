@@ -44,7 +44,7 @@ export default function Auth({ onAuthenticated }) {
       await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: window.location.origin, // Redirect back to your app after login
+          redirectTo: `${window.location.origin}/dashboard`, // Redirect back to your app after login
         },
       })
     } catch (error) {
