@@ -61,7 +61,7 @@ export default function Auth({ onAuthenticated }) {
         if (error) throw error
 
         if(!data.session) {
-          alert('Sign-up successful! Please check your email for a confirmation link.')
+          setFormError('Sign-up successful! Please check your email for a confirmation link.')
         } else {
           onAuthenticated(data.session?.user ?? true)
           navigate('/')
@@ -89,13 +89,16 @@ export default function Auth({ onAuthenticated }) {
         },
       })
     } catch (error) {
-      console.error('Google sign-in error:', error)
+      setFormError(error?.message ?? "Google sign-in failed.");
     }
   }
 
   return (
     <div className="auth-container">
       <h2>{isLogin ? 'Login' : 'Sign Up'}</h2>
+      <pre style={{ color: "#fff", fontSize: 12 }}>
+        formError = {String(formError)}
+      </pre>
       {formError && (
         <div className="auth-error">
           {formError}
@@ -106,14 +109,14 @@ export default function Auth({ onAuthenticated }) {
           type="email"
           placeholder="Email"
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          onChange={(e) => { setEmail(e.target.value); setFormError(null); }}
           required
         />
         <input
           type="password"
           placeholder="Password"
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          onChange={(e) => { setPassword(e.target.value); setFormError(null); }}
           required
         />
         {!isLogin && password.length > 0 && password.length < 6 && (
