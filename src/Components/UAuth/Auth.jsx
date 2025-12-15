@@ -9,10 +9,29 @@ export default function Auth({ onAuthenticated }) {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [isLogin, setIsLogin] = useState(true)
+  const [formError, setFormError] = useState(null);
   const navigate = useNavigate();
+
+  function validateSignup({ email, password }) {
+    if (!email) return "Email is required.";
+    if (!password) return "Password is required.";
+
+    if (password.length < 6) {
+      return "Password must be at least 6 characters long.";
+    }
+
+    // Optional extra rules
+    // if (!/[A-Z]/.test(password)) return "Password must include an uppercase letter.";
+    // if (!/[0-9]/.test(password)) return "Password must include a number.";
+
+    return null;
+  }
+
+
 
   const handleLogin = async (event) => {
     event.preventDefault()
+    setFormError(null);
     setLoading(true)
 
     try {
@@ -22,7 +41,23 @@ export default function Auth({ onAuthenticated }) {
         onAuthenticated(data.session?.user ?? true)
         navigate('/')
       } else {
-        const { data, error } = await supabase.auth.signUp({ displayName, email, password })
+
+        const validationError = validateSignup({ email, password})
+
+        if (validationError) {
+          setFormError(validationError);
+          setLoading(false);
+          return;
+        }
+
+        const { data, error } = await supabase.auth.signUp({ 
+          email, 
+          password, 
+          options: {
+            data: { full_name: displayName},
+          }, 
+        });
+
         if (error) throw error
 
         if(!data.session) {
@@ -33,11 +68,17 @@ export default function Auth({ onAuthenticated }) {
         }
       }
     } catch (error) {
-      alert(error.message)
+      if(error.message?.toLowerCase().includes("password")) {
+        setFormError("Password must be at least 6 characters long.");
+      } else if (error.message?.includes("email")) {
+        setFormError("Please enter a valid email address.");
+      } else {
+      setFormError(error.message || "Something went wrong. Please try again.");
+    }
     } finally {
       setLoading(false)
     }
-  }
+  };
 
   const handleGoogleSignIn = async () => {
     try {
@@ -55,6 +96,11 @@ export default function Auth({ onAuthenticated }) {
   return (
     <div className="auth-container">
       <h2>{isLogin ? 'Login' : 'Sign Up'}</h2>
+      {formError && (
+        <div className="auth-error">
+          {formError}
+        </div>
+      )}
       <form onSubmit={handleLogin}>
         <input
           type="email"
@@ -70,6 +116,11 @@ export default function Auth({ onAuthenticated }) {
           onChange={(e) => setPassword(e.target.value)}
           required
         />
+        {!isLogin && password.length > 0 && password.length < 6 && (
+          <small style={{ color: "#d32f2f" }}>
+            Password must be at least 6 characters
+          </small>
+        )}
         <button disabled={loading} type="submit">
           {loading ? 'Loading…' : isLogin ? 'Login' : 'Sign Up'}
         </button>
