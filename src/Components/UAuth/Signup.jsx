@@ -9,14 +9,36 @@ export default function Signup() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
-    const [loading, setLoading] = useState('');
-
+    const [loading, setLoading] = useState(false);
+    const [formError, setFormError] = useState(null);
     const {session, signUpNewUser } = UserAuth();
     const navigate = useNavigate();
 
+    function validateSignup({ email, password }) {
+        if (!email) return "Email is required.";
+        if (!password) return "Password is required.";
+
+        if (password.length < 6) {
+        return "Password must be at least 6 characters long.";
+        }
+
+        // Optional extra rules
+        // if (!/[A-Z]/.test(password)) return "Password must include an uppercase letter.";
+        // if (!/[0-9]/.test(password)) return "Password must include a number.";
+
+        return null;
+    }
+
     const handleSignUp = async (e) => {
         e.preventDefault();
+        setFormError(null);
         setLoading(true);
+
+        const validationError = validateSignup({ email, password});
+        if (validationError) {
+            setFormError(validationError);
+            return;
+        }
 
         try {
             
@@ -24,9 +46,11 @@ export default function Signup() {
 
             if(result.success) {
                 navigate('/dashboard')
+            } else {
+                setFormError(result?.error ?? "Sign up failed. Please try again");
             }
         } catch (err) {
-        setError("an error occured");
+        setFormError(err?.message ?? "Sign up failed. Please try again.");
         } finally {
             setLoading(false);
         }
@@ -41,13 +65,18 @@ export default function Signup() {
             },
           })
         } catch (error) {
-          console.error('Google sign-in error:', error)
+          setFormError(error?.message ?? "Google sign-in failed.");
         }
       }
 
     return ( <div className="form">
         <div className="form-container">
             <h1>SignUp</h1>
+            {formError && (
+                <div className="auth-error">
+                {formError}
+                </div>
+            )}
             <form className="signUpForm" onSubmit={handleSignUp}>
                  <p>Already have an account? <Link to={"/signin"}>Sign In!</Link></p>
                  <input
@@ -61,18 +90,18 @@ export default function Signup() {
                 type="email"
                 placeholder="Email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {setEmail(e.target.value); setFormError(null); setError("");}}
                 required
                 />
                 <input
                 type="password"
                 placeholder="Password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {setPassword(e.target.value); setFormError(null); setError("");}}
                 required
                 />
                 <button className="signUpbtn" disabled={loading} type="submit">
-                    Sign Up
+                    {loading ? "Signing up..." : "Sign Up"}
                 </button>
                 {error && <p>{error}</p>}
             </form>
