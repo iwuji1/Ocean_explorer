@@ -524,4 +524,18 @@
     width: 90vw;
     padding: 16px;
   }
+
+   .LeftMenuDocked.is-open{
+    transform: translateX(0);
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .LeftMenuDocked{
+    transform: translateX(-110%);
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 0.35s ease, opacity 0.2s ease;
+    width: min(340px, 85vw);
+  }
 }
