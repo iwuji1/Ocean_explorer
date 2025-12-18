@@ -8,11 +8,13 @@ import HomeMap from "./Components/MapModes/HomeMap";
 import MainMap from "./Components/MapModes/MainMap";
 import ExpeditionMap from "./Components/MapModes/ExpeditionMap";
 import MoneyMap from "./Components/MapModes/MoneyMap";
+import Learn from "./Components/Pages/LearnMore";
 
 export const router = createBrowserRouter([
     {path: "/", element: <HomeMap />},
     {path: "/signup", element: <Signup />},
     {path: "/signin", element: <Signin />},
+    {path: "/learn", element: <Learn />},
     {
         path: "/dashboard", 
         element: (

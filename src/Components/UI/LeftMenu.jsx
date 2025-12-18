@@ -70,7 +70,7 @@ export default function LeftMenu({ LeftMenuRef ,zoomedIn, isLeftMenuOpen, goHome
         <ul>
           <li><button onClick={() => navigate("/mainmap")}>🌍 Explore</button></li>
           <li><button onClick={() => navigate("/expeditionmap")}>🧭 Hexpedition</button></li>
-          <li><button onClick={() => navigate("/moneymap")}>💰 Purchase</button></li>
+          {/* <li><button onClick={() => navigate("/moneymap")}>💰 Purchase</button></li> */}
         </ul>
       </div>
     </div>
