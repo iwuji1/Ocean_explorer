@@ -334,7 +334,7 @@
 
 /* 🌊 Floating Capsule Toggle Bar */
 .TopToggleBar {
-  position: absolute;
+  position: fixed;
   top: 20px;
   left: 50%;
   transform: translateX(-50%);
@@ -347,6 +347,22 @@
   border-radius: 20px;
   padding: 10px 20px;
   box-shadow: 0 0 20px rgba(0, 255, 242, 0.15);
+}
+
+/* Mobile: dock right, vertical */
+.TopToggleBar.TopToggleBar--mobile {
+  top: 50%;
+  left: auto;
+  right: 12px;
+  transform: translateY(-50%);
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 16px;
+
+  /* optional “pill tray” look */
+  background: rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(8px);
 }
 
 .toggle-pill {
@@ -366,6 +382,16 @@
   gap: 8px;
 }
 
+/* Compact buttons: icon-only */
+.toggle-pill.compact {
+  width: 46px;
+  height: 46px;
+  padding: 0;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+}
+
 /* Inner label + icon */
 .toggle-label {
   display: inline-flex;
@@ -373,8 +399,23 @@
   gap: 4px;
 }
 
+.toggle-pill.compact .toggle-label {
+  display: grid;
+  place-items: center;
+  gap: 0;
+}
+
 .toggle-icon {
   font-size: 0.9rem;
+}
+
+.toggle-pill.compact .toggle-icon {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.toggle-pill.compact .toggle-text {
+  display: none;
 }
 
 /* The small circular knob on the right */

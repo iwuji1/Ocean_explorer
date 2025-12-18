@@ -9,6 +9,7 @@ export default function H3_5FamilyLayer(map, idPrefix = "h5_family", visible = t
     map.addSource(sourceid, {
         type: "geojson",
         data: "/Data/H3_5_depth_wrecks_family.json",
+        promoteId: "GRID_ID",
     });
 
     map.addLayer({
@@ -17,18 +18,8 @@ export default function H3_5FamilyLayer(map, idPrefix = "h5_family", visible = t
         source: sourceid,
         layout: { visibility: visible ? "visible" : "none" },
         paint: {
-            "fill-color": [
-                "case",
-                ["boolean", ["feature-state", "glow"], false],
-                "#00fff2", // glowing cyan color
-                "#088", // default color
-            ],
-            "fill-opacity": [
-                "case",
-                ["boolean", ["feature-state", "glow"], false],
-                0.8,
-                0.5,
-            ],
+            "fill-color": "#088",
+            "fill-opacity": 0.7,
             },
     });
 
@@ -38,54 +29,36 @@ export default function H3_5FamilyLayer(map, idPrefix = "h5_family", visible = t
         source: sourceid,
         layout: { visibility: visible ? "visible" : "none" },
         paint: {
-        "line-color": "#000",
-        "line-width": 1,
+            "line-color": "#000000",
+        "line-width": [
+            "case",
+            ["any",
+            ["boolean", ["feature-state", "selected"], false],
+            ["boolean", ["feature-state", "hover"], false]
+            ],
+            2.5,
+            1
+        ],
         },
     });
 
     // Hover effect
-    addMapHover(map, fillLayerId, "#44DBDA");
-
-    let activeFeatureId = null;
+    addMapHover(map, fillLayerId);
 
     map.on("click", fillLayerId, (e) => {
-        if (!e.features.length) return;
 
-        const feature = e.features[0];
-        const featureId = feature.id || feature.properties.grid_id;
-
-        if (activeFeatureId !== null) {
-            map.setFeatureState(
-                { source: sourceid, id: activeFeatureId },
-                { glow: false }
-            );
-        }
-
-        if (featureId) {
-            activeFeatureId = featureId;
-            map.setFeatureState(
-                { source: sourceid, id: activeFeatureId },
-                { glow: true }
-            );
-        }
-
-        const featureProps = {...feature.properties, layerLevel: idPrefix, featureId: featureId};
+        const f = e.features?.[0];
+        if (!f) return;
+        
+        if (e.features.length > 0) {
+        const featureProps = e.features[0].properties;
+        const layerData = {...featureProps, layerLevel: idPrefix}
+        // Send to parent
         if (typeof map.__setSelectedFeature === "function") {
-            map.__setSelectedFeature(featureProps);
+            map.__setSelectedFeature(layerData);
+            }
         }
     });
-
-    map.on("click", (e) => {
-        const features = map.queryRenderedFeatures(e.point, {
-            layers: [fillLayerId],
-        });
-        if (!features.length && activeFeatureId !== null) {
-            map.setFeatureState(
-                { source: sourceid, id: activeFeatureId },
-                { glow: false })
-                activeFeatureId = null;
-            }
-        })
 
 
     return {sourceid, fillLayerId, outlineLayerId}

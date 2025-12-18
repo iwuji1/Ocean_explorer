@@ -9,6 +9,7 @@ export default function H3_7FamilyLayer(map, idPrefix = "h7_family", visible = t
     map.addSource(sourceid, {
         type: "geojson",
         data: "/Data/H3_7_depth_wrecks_family.json",
+        promoteId: "GRID_ID",
     });
 
     map.addLayer({
@@ -17,9 +18,9 @@ export default function H3_7FamilyLayer(map, idPrefix = "h7_family", visible = t
         source: sourceid,
         layout: { visibility: visible ? "visible" : "none" },
         paint: {
-        "fill-color": "#088",
-        "fill-opacity": 0.5,
-        },
+            "fill-color": "#088",
+            "fill-opacity": 0.7,
+            },
     });
 
     map.addLayer({
@@ -28,15 +29,27 @@ export default function H3_7FamilyLayer(map, idPrefix = "h7_family", visible = t
         source: sourceid,
         layout: { visibility: visible ? "visible" : "none" },
         paint: {
-        "line-color": "#000",
-        "line-width": 1,
+            "line-color": "#000000",
+        "line-width": [
+            "case",
+            ["any",
+            ["boolean", ["feature-state", "selected"], false],
+            ["boolean", ["feature-state", "hover"], false]
+            ],
+            2.5,
+            1
+        ],
         },
     });
 
     // Hover effect
-    addMapHover(map, fillLayerId, "#44DBDA");
+    addMapHover(map, fillLayerId);
 
     map.on("click", fillLayerId, (e) => {
+
+        const f = e.features?.[0];
+        if (!f) return;
+        
         if (e.features.length > 0) {
         const featureProps = e.features[0].properties;
         const layerData = {...featureProps, layerLevel: idPrefix}

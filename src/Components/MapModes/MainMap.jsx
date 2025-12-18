@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { use, useEffect, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import { gsap } from "gsap";
 import { supabase } from "../../supabaseClient";
@@ -40,6 +40,7 @@ export default function MainMap() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [leftMenuOpen, setLeftMenuOpen] = useState(false);
   const [mapReady, setMapReady] = useState(false);
+  const [colorMode, setColorMode] = useState("funding"); // "funding" or "depth"
 
   
   const MapMenuRef = useRef(null);
@@ -53,7 +54,7 @@ export default function MainMap() {
 
   // Store layer IDs for toggling
 
-  const layers = ["BigHexLayer", "H3_5FamilyLayer", "H3_6FamilyLayer", "H3_7FamilyLayer"];
+  const layers = [ "H3_5FamilyLayer", "H3_6FamilyLayer", "H3_7FamilyLayer"];
 
   useEffect(() => {
     if (mapRef.current) return; // initialize map only once
@@ -94,7 +95,6 @@ export default function MainMap() {
       const interestLayer = InterestPoints(m);
 
       // Hex layers
-      layerIdsRef.current["BigHexLayer"] = BigHexLayer(m, activeLayer === "BigHexLayer");
       layerIdsRef.current["H3_5FamilyLayer"] = H3_5FamilyLayer(m, "h5_family", activeLayer === "H3_5FamilyLayer");
       layerIdsRef.current["H3_6FamilyLayer"] = H3_6FamilyLayer(m, "h6_family", activeLayer === "H3_6FamilyLayer");
       layerIdsRef.current["H3_7FamilyLayer"] = H3_7FamilyLayer(m, "h7_family", activeLayer === "H3_7FamilyLayer");
@@ -137,8 +137,6 @@ export default function MainMap() {
         map.setLayoutProperty(ids.layerId, "visibility", visibility);
       }
 
-      // if (map.getLayer(ids.fillLayerId)) map.setLayoutProperty(ids.fillLayerId, "visibility", visibility);
-      // if (map.getLayer(ids.outlineLayerId)) map.setLayoutProperty(ids.outlineLayerId, "visibility", visibility);
     });
   }, [map, activeLayer]);
 
@@ -204,64 +202,6 @@ export default function MainMap() {
             console.error(err);
         }
     }
-
-    // const fetchHexFundingData = async () => {
-
-
-
-    //   const { data: hexRows, error: hexError } = await supabase
-    //       .from("hexes")
-    //       .select("grid_id, price, total_funded");
-      
-    //       console.log("hexes select:", { hexError, count: hexRows?.length });
-
-    //     if (hexError) {
-    //       console.error("Error fetching hexes:", hexError);
-    //       return;
-    //     }
-
-    //   const hexDataMap = {};
-    //   (hexRows || []).forEach((row) => {
-    //     const key = normGridId(row.grid_id);
-    //     if (!key) return;
-
-    //     const price = Number(row.price || 0);
-    //     const totalFundedRaw = Number(row.total_funded || 0);
-    //     const totalFunded = Math.max(0, totalFundedRaw);
-    //     const pct = price > 0 ? (totalFunded / price) * 100 : 0;
-
-    //     hexDataMap[key] = { ...row, funding_pct: pct };
-    //   });
-
-    //   let ownershipData = [];
-
-    //   const { data: ownership, error: ownershipError } = await supabase
-    //     .from('hex_ownership')
-    //     .select("hex_id, user_id, amount_funded, percentage_owned");
-      
-    //   console.log("ownership select:", { ownershipError, count: ownership?.length });
-
-    //   if (ownershipError) console.error("Error fetching ownership:", ownershipError);
-
-    //   ownershipData = ownership || [];
-      
-      
-    //   setHexFundingData({
-    //     hexData: hexDataMap,
-    //     ownershipData: ownershipData || [],
-    //   });
-
-    //   console.log("has clicked hex?",
-    //     !!hexDataMap["865e71b07ffffff"]
-    //   );
-
-    //   const m = mapRef.current;
-    //   if (m) {
-    //     m.once("idle", () => {
-    //       applyFundingFeatureState(m, hexDataMap, layerIdsRef.current);
-    //     });
-    //   }
-    // };
 
     const fetchHexFundingData = async () => {
       try {
@@ -357,7 +297,7 @@ export default function MainMap() {
       if (p >= 50) return "#00A7FF";   // 50–74%
       if (p >= 25) return "#005CFF";   // 25–49%
       if (p > 0)   return "#222C5C";   // 1–24% (barely glowing)
-      return "#073642";                  // 0% (not funded)
+      return "#888888";                  // 0% (not funded)
     }
 
     function applyFundingColours(map, hexDataMap, layerIds) {
@@ -378,8 +318,15 @@ export default function MainMap() {
       const fillExprWithHover = [
         "case",
         ["boolean", ["feature-state", "hover"], false],
-        "#44DBDA",
+        "#e8a302",
         matchExpr
+      ];
+
+      const outlineExprWithHover = [
+        "case",
+        // ["boolean", ["feature-state", "selected"], false], "#e8a302",
+        ["boolean", ["feature-state", "hover"], false], "#44DBDA",
+        "#000000"
       ];
 
       ["H3_5FamilyLayer", "H3_6FamilyLayer", "H3_7FamilyLayer"].forEach((key) => {
@@ -389,15 +336,36 @@ export default function MainMap() {
 
         map.setPaintProperty(ids.fillLayerId, "fill-color", fillExprWithHover);
         map.setPaintProperty(ids.fillLayerId, "fill-opacity", 0.7);
+
+        map.setPaintProperty(ids.outlineLayerId, "line-color", outlineExprWithHover);
+        map.setPaintProperty(ids.outlineLayerId, "line-width", [
+          "case",
+          ["any",
+            ["boolean", ["feature-state", "selected"], false],
+            ["boolean", ["feature-state", "hover"], false]
+          ],
+          2.5,
+          1
+        ]);
+
+
       });
     }
 
 
     useEffect(() => {
       if (!map || !Object.keys(hexFundingData.hexData).length) return;
+      if (colorMode !== "funding") return;
 
       applyFundingColours(map, hexFundingData.hexData, layerIdsRef.current);
-    }, [map, hexFundingData]);
+    }, [map, hexFundingData, colorMode]);
+
+    useEffect(() => {
+      if (!map) return;
+      if (colorMode !== "depth") return;
+
+      applyDepthColors(map, layerIdsRef.current);
+    }, [map, colorMode]);
 
     function applyFundingFeatureState(map, hexDataMap, layerIds) {
       const familyKeys = ["H3_5FamilyLayer", "H3_6FamilyLayer", "H3_7FamilyLayer"];
@@ -418,14 +386,53 @@ export default function MainMap() {
       });
     }
 
-    function normGridId(v) {
-      return String(v ?? "")
-        .normalize("NFKC")
-        .replace(/\u00A0/g, " ")   // NBSP -> space
-        .replace(/[\u200B-\u200D\uFEFF]/g, "") // zero-width chars
-        .trim()
-        .toLowerCase();
-    }
+    function applyDepthColors(map, layerIds) {
+      if(!map) return;
+
+      const depthColorRamp = [
+        "case",
+
+        // Unknown / missing MEAN
+        ["!", ["has", "MEAN"]],
+        "#888888",
+
+        // Known values → step ramp
+        [
+        "step",
+        ["get", "MEAN"],
+
+        // default (MEAN < -5000)
+        "#051833",
+
+        -5000, "#103b53",
+        -3000, "#205b71",
+        -2000, "#307e8d",
+        -1500, "#409eac",
+        -100,  "#5ce2e7",
+        0,     "#a7a7a7" // > 0
+        ]
+      ];
+
+      const familyKeys = ["H3_5FamilyLayer", "H3_6FamilyLayer", "H3_7FamilyLayer"];
+
+      familyKeys.forEach((key) => {
+        const ids = layerIds[key];
+        if (!ids?.fillLayerId) return;
+        if (!map.getLayer(ids.fillLayerId)) return;
+
+        map.setPaintProperty(ids.fillLayerId, "fill-color", depthColorRamp);
+        map.setPaintProperty(ids.fillLayerId, "fill-opacity", 0.7);
+
+        map.setPaintProperty(ids.outlineLayerId, "line-color", [
+          "case",
+          ["boolean", ["feature-state", "selected"], false], "#e8a302",
+          ["boolean", ["feature-state", "hover"], false], "#ffffff",
+          "#000000"
+        ]);
+
+      });
+  }
+
 
     useEffect(() => {
       if (!mapReady) return;
@@ -457,6 +464,11 @@ export default function MainMap() {
         zoomedIn={zoomedIn}
         map={map}
         layerRefs={layerIdsRef}
+        colorMode={colorMode}
+        setColorMode={setColorMode}
+        activeLayer={activeLayer}
+        setActiveLayer={setActiveLayer}
+        layers={layers}
       />
 
       <HomeUI

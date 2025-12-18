@@ -18,15 +18,12 @@ export default function H3_6FamilyLayer(map, idPrefix = "h6_family", visible = t
         source: sourceid,
         layout: { visibility: visible ? "visible" : "none" },
         paint: {
-            "fill-color": [
-                "case",
-                ["boolean", ["feature-state", "hover"], false],
-                "#44DBDA",
-                "#073642" // base fallback until we inject match expression
-            ],
+            "fill-color": "#088",
             "fill-opacity": 0.7,
             },
     });
+
+    const HIGHLIGHT = "#e8a302";
 
     map.addLayer({
         id: outlineLayerId,
@@ -34,24 +31,26 @@ export default function H3_6FamilyLayer(map, idPrefix = "h6_family", visible = t
         source: sourceid,
         layout: { visibility: visible ? "visible" : "none" },
         paint: {
-        "line-color": "#000",
-        "line-width": 1,
+            "line-color": "#000000",
+        "line-width": [
+            "case",
+            ["any",
+            ["boolean", ["feature-state", "selected"], false],
+            ["boolean", ["feature-state", "hover"], false]
+            ],
+            2.5,
+            1
+        ],
         },
     });
 
-    // Hover effect
+    // // Hover effect
     addMapHover(map, fillLayerId);
 
     map.on("click", fillLayerId, (e) => {
 
         const f = e.features?.[0];
         if (!f) return;
-
-        console.log("CLICKED layer:", fillLayerId);
-        console.log("feature.id:", f.id);
-        console.log("GRID_ID:", f.properties?.GRID_ID);
-        console.log("source:", map.getLayer(fillLayerId)?.source);
-        console.log("sourceLayer:", map.getLayer(fillLayerId)?.["source-layer"]);
         
         if (e.features.length > 0) {
         const featureProps = e.features[0].properties;
