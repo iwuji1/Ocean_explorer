@@ -74,7 +74,7 @@ export default function HomeUI({zoomedIn, zoomToSaintVincent, user, handleLogout
                     onClick={handleMainButtonClick}
                     >{user ? "Explore St. Vincent" : "Sign In"}
                     </button> 
-                    <button className="LearnMore" onClick={() => navigate("https://www.mapthegaps.org/ocean-citizen-explorer")}>Learn More</button>
+                    <button className="LearnMore" onClick={() => navigate("/learn")}>Learn More</button>
                     
                 </div>
             </div>
